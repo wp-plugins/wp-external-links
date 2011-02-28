@@ -17,13 +17,11 @@ Manage the external links on your site.
 * Choose an icon for external links
 * Add a css Class-name
 * Unobtrusive JavaScript method wich is XHTML Strict compliant
-* Supports PHP4.3+ and up to latest WP version
-
-Also see info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
+* Supports PHP4.3+ and up to latest WP versionMore info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
 
 == Installation ==
 
-1. Upload `new-window-links.zip` to the `/wp-content/plugins/` directory or add the plugin with 'Add Plugins' in the admin menu
+1. Upload `wp-external-links.zip` to the `/wp-content/plugins/` directory or add the plugin with 'Add Plugins' in the admin menu
 1. Be sure the plugin is activated in the Plugin-list
 
 == Frequently Asked Questions ==
