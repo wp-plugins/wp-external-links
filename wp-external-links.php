@@ -4,7 +4,7 @@ Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/
 Description: Manage the external links on your site: opening in a new window, set link icon, set "external", set "nofollow", set css-class.
 Author: Victor Villaverde Laan
-Version: 0.11
+Version: 0.12
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
