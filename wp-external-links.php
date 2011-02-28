@@ -30,7 +30,9 @@ class WP_External_Links {
 	 * @var array
 	 */
 	var $options = array(
-			'new_window' => 1,
+			'new_window' => TRUE,
+			'use_js' => TRUE,
+			'target' => '_blank',
 			'external' => TRUE,
 			'nofollow' => TRUE,
 			'icon' => 1,
@@ -96,7 +98,7 @@ class WP_External_Links {
 			add_action( 'wp_head', array( $this, 'wp_head' ) );
 
 			// set js file
-			if ( $this->options[ 'new_window' ] >= 4 ) {
+			if ( $this->options[ 'use_js' ] ) {
 				wp_enqueue_script( 'external-links', plugins_url( 'js/external-links.js', __FILE__ ), array( 'jquery' ), '0.11' );
 			}
 		}
@@ -107,13 +109,13 @@ class WP_External_Links {
 	 */
 	function wp_head() {
 ?>
-<?php if ( $this->options[ 'new_window' ] >= 4 ): ?>
+<?php if ( $this->options[ 'use_js' ] ): ?>
 <!-- JS External Links Plugin -->
 <script language="javascript">
 /* <![CDATA[ */
 var gExtLinks = {
 	baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',
-	target: '<?php echo ( $this->options[ 'new_window' ] == 5 ) ? '_new' : '_blank' ?>'
+	target: '<?php echo $this->options[ 'target' ] ?>'
 };
 /* ]]> */
 </script>
@@ -173,9 +175,9 @@ var gExtLinks = {
 									: $attrs[ 'class' ] .' '. $this->options[ 'class_name' ];
 			}
 
-			// set target="_blank"
-			if ( $this->options[ 'new_window' ] == 1 )
-				$attrs[ 'target' ] = '_blank';
+			// set target
+			if ( $this->options[ 'new_window' ] AND ! $this->options[ 'use_js' ] )
+				$attrs[ 'target' ] = $this->options[ 'target' ];
 		}
 
 
@@ -210,6 +212,14 @@ var gExtLinks = {
 	 */
 	function options_page() {
 ?>
+<script language="javascript">
+jQuery(function( $ ){
+	$( 'input#new_window' ).change(function(){
+		var anim = $( this ).attr( 'checked' ) ? 'slideDown' : 'slideUp';
+		$( 'div.new_window_options' )[ anim ]();
+	})
+})
+</script>
 	<div class="wrap">
 		<div class="icon32" id="icon-options-custom" style="background:url( <?php echo plugins_url( 'images/icon.png', __FILE__ ) ?> ) no-repeat 50% 50%"><br></div>
 		<h2><?php _e( 'External Links Settings' ) ?></h2>
@@ -231,21 +241,19 @@ var gExtLinks = {
 						<table class="form-table">
 						<tr>
 							<th><?php _e( 'Open in new window', $this->domain ) ?></th>
-							<td><label><input type="radio" name="<?php echo $this->options_name ?>[new_window]" value="1" <?php checked('1', (int) $options['new_window']); ?> />
-								<span><?php _e( '1) No, open external links in active window', $this->domain ) ?></span></label>
-							<br/>
-							<br/><label><input type="radio" name="<?php echo $this->options_name ?>[new_window]" value="2" <?php checked('2', (int) $options['new_window']); ?> />
-								<span><?php _e( '2) Yes, add <code>target="_blank"</code> to external links (every external link is loaded in a new window)', $this->domain ) ?></span></label>
-							<br/><label><input type="radio" name="<?php echo $this->options_name ?>[new_window]" value="3" <?php checked('3', (int) $options['new_window']); ?> />
-								<span><?php _e( '3) Yes, add <code>target="_new"</code> to external links (all external links will be loaded in the same new window)', $this->domain ) ?></span></label>
-							<br/>
-							<br/><label><input type="radio" name="<?php echo $this->options_name ?>[new_window]" value="4" <?php checked('4', (int) $options['new_window']); ?> />
-								<span><?php _e( '4) Yes, using JavaScript for opening every external link in a new window', $this->domain ) ?></span></label>
-							<br/><label><input type="radio" name="<?php echo $this->options_name ?>[new_window]" value="5" <?php checked('5', (int) $options['new_window']); ?> />
-								<span><?php _e( '5) Yes, using JavaScript for opening all external links in the same new window', $this->domain ) ?></span></label>
-							<br />
-							<br />
-							<p><span class="description"><?php _e( 'Note: method 2 and 3 are compliant with XHTML Transitional. The other methods are also XHTML Strict compliant.' ) ?></span></p>
+							<td>
+								<label><input type="checkbox" name="<?php echo $this->options_name ?>[new_window]" id="new_window" value="1" <?php checked( '1', (int) $options['new_window'] ); ?> />
+								<span><?php _e( 'Open external links in a new window (or tab)', $this->domain ) ?></span></label>
+								<div class="new_window_options">
+								<p><label><input type="checkbox" name="<?php echo $this->options_name ?>[use_js]" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
+									<span><?php _e( 'Use JavaScript method (for XHTML Strict compliance)', $this->domain ) ?></span></label>
+								</p><p><span><?php _e( 'Target:', $this->domain ) ?></span>
+									<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_blank" <?php checked( '_blank', $options['target'] ); ?> />
+									<span><?php _e( '_blank, opens every external link in a new window (or tab)', $this->domain ) ?></span></label>
+									<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_new" <?php checked( '_new', $options['target'] ); ?> />
+									<span><?php _e( '_new, opens all external link in the same new window (or tab)', $this->domain ) ?></span></label>
+								</p>
+								</div>
 							</td>
 						</tr>
 						<tr>
@@ -293,7 +301,7 @@ var gExtLinks = {
 								<div style="width:25%;float:left">
 								<label><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="0" <?php checked('0', (int) $options['icon']); ?> />
 								<span><?php _e( 'No icon', $this->domain ) ?></span></label>
-						<?php for ( $x = 1; $x <= 11; $x++ ): ?>
+						<?php for ( $x = 1; $x <= 17; $x++ ): ?>
 							<br/><label><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="<?php echo $x ?>" <?php checked( $x, (int) $options['icon'] ); ?> />
 								<img src="<?php echo plugins_url( 'images/external-'. $x .'.png', __FILE__ ) ?>" /></label>
 						<?php endfor; ?>
@@ -318,8 +326,8 @@ var gExtLinks = {
 				<div class="inside">
 					<ul>
 						<li><a href="<?php echo plugins_url( 'readme.txt', __FILE__ ) ?>" target="_blank">readme.txt</a></li>
-						<li><a href="http://www.freelancephp.net/wp-external-links-plugin/" target="_blank"><?php _e( 'Plugin page on ', $this->domain ) ?> FreelancePHP.net</a></li>
-						<li><a href="http://wordpress.org/extend/plugins/wp-external-links/" target="_blank"><?php _e( 'Plugin page on ', $this->domain ) ?> WordPress.org</a></li>
+						<li><a href="http://www.freelancephp.net/wp-external-links-plugin/" target="_blank"><?php _e( 'Plugin on ', $this->domain ) ?> FreelancePHP.net</a></li>
+						<li><a href="http://wordpress.org/extend/plugins/wp-external-links/" target="_blank"><?php _e( 'Plugin on ', $this->domain ) ?> WordPress.org</a></li>
 						<li><a href="http://www.freelancephp.net/contact/" target="_blank"><?php _e( 'Contact the author', $this->domain ) ?></a></li>
 					</ul>
 				</div>
@@ -359,7 +367,17 @@ var gExtLinks = {
 
 		if ( ! empty( $saved_options ) ) {
 			// set saved option values
-			$this->options['new_window'] = $saved_options['new_window'];
+			if ( isset( $saved_options['new_window'] ) AND ! isset( $saved_options['target'] ) ) {
+				// convert values from version <= 0.11
+				$new_window = ( empty( $saved_options['new_window'] ) ) ? $this->options['new_window'] : $saved_options['new_window'];
+				$this->options['new_window'] = ( $new_window != 1 );
+				$this->options['use_js'] = ( $new_window == 4 OR $new_window == 5 );
+				$this->options['target'] = ( $new_window == 2 OR $new_window == 4 ) ? '_blank' : '_new';
+			} else {
+				$this->options['new_window'] = ! empty( $saved_options['new_window'] );
+				$this->options['use_js'] = ! empty( $saved_options['use_js'] );
+				$this->options['target'] = $saved_options['target'];
+			}
 			$this->options['external'] = ! empty( $saved_options['external'] );
 			$this->options['nofollow'] = ! empty( $saved_options['nofollow'] );
 			$this->options['icon'] = $saved_options['icon'];

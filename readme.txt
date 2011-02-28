@@ -1,11 +1,11 @@
-=== WP External Links ===
+=== WP External Links (new window, icon, "external", "nofollow") ===
 Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.11
+Stable tag: 0.12
 
-Manage the external links on your site: opening in a new window, set link icon, set "external", set "nofollow", set css-class.
+Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set css-class.
 
 == Description ==
 
@@ -19,11 +19,11 @@ Manage the external links on your site.
 * Unobtrusive JavaScript method wich is XHTML Strict compliant
 * Supports PHP4.3+ and up to latest WP version
 
-Also see info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
+More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
 
 == Installation ==
 
-1. Upload `new-window-links.zip` to the `/wp-content/plugins/` directory or add the plugin with 'Add Plugins' in the admin menu
+1. Upload `wp-external-links.zip` to the `/wp-content/plugins/` directory or add the plugin with 'Add Plugins' in the admin menu
 1. Be sure the plugin is activated in the Plugin-list
 
 == Frequently Asked Questions ==
@@ -36,6 +36,10 @@ Also see info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-link
 1. Icon on the Site
 
 == Changelog ==
+
+= 0.12 =
+* Options are organized more logical
+* Added some more icons
 
 = 0.11 =
 * JavaScript uses window.open() (tested in FireFox Opera, Safari, Chrome and IE6+)
