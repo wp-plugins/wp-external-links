@@ -1,4 +1,4 @@
-=== WP External Links (new window, icon, "external", "nofollow") ===
+=== WP External Links (new window, icon, "nofollow") ===
 Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
