@@ -3,9 +3,9 @@ Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.12
+Stable tag: 0.20
 
-Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set css-class.
+Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon or additional css-class.
 
 == Description ==
 
@@ -15,7 +15,7 @@ Manage the external links on your site.
 * Opening external links in a new window
 * Adding "external" and/or "nofollow" value to rel-attribute
 * Choose an icon for external links
-* Add a css Class-name
+* Choose a No-Icon class and an additional class (for your own styling)
 * Unobtrusive JavaScript method wich is XHTML Strict compliant
 * Supports PHP4.3+ and up to latest WP version
 
@@ -36,6 +36,13 @@ More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-pl
 1. Icon on the Site
 
 == Changelog ==
+
+= 0.20 =
+* Put icon styles in external stylesheet
+* Can use "ext-icon-..." to show a specific icon on a link
+* Added option to set your own No-Icon class
+* Made "Class" optional, so it's not used for showing icons anymore
+* Added 3 more icons
 
 = 0.12 =
 * Options are organized more logical

@@ -4,7 +4,7 @@ Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/
 Description: Manage the external links on your site: opening in a new window, set link icon, set "external", set "nofollow", set css-class.
 Author: Victor Villaverde Laan
-Version: 0.12
+Version: 0.20
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -16,17 +16,25 @@ License: Dual licensed under the MIT and GPL licenses
 class WP_External_Links {
 
 	/**
+	 * Current version
+	 * @var string
+	 */
+	var $version = '0.20';
+
+	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
 	 * @var string
 	 */
 	var $domain = 'WP_External_Links';
 
 	/**
+	 * Name of the options
 	 * @var string
 	 */
 	var $options_name = 'WP_External_Links_options';
 
 	/**
+	 * Options to be saved
 	 * @var array
 	 */
 	var $options = array(
@@ -36,7 +44,8 @@ class WP_External_Links {
 			'external' => TRUE,
 			'nofollow' => TRUE,
 			'icon' => 1,
-			'class_name' => 'external-link',
+			'no_icon_class' => 'no-ext-icon',
+			'class_name' => 'ext-link',
 		);
 
 	/**
@@ -97,9 +106,12 @@ class WP_External_Links {
 			// add wp_head for setting js vars and css style
 			add_action( 'wp_head', array( $this, 'wp_head' ) );
 
+			// add stylesheet
+			wp_enqueue_style( 'wp-external-links', plugins_url( 'css/external-links.css', __FILE__ ), FALSE, $this->version );
+
 			// set js file
 			if ( $this->options[ 'use_js' ] ) {
-				wp_enqueue_script( 'external-links', plugins_url( 'js/external-links.js', __FILE__ ), array( 'jquery' ), '0.11' );
+				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/external-links.js', __FILE__ ), array( 'jquery' ), $this->version );
 			}
 		}
 	}
@@ -108,40 +120,41 @@ class WP_External_Links {
 	 * Callback wp_head
 	 */
 	function wp_head() {
+		if ( $this->options[ 'use_js' ] ):
 ?>
-<?php if ( $this->options[ 'use_js' ] ): ?>
-<!-- JS External Links Plugin -->
-<script language="javascript">
-/* <![CDATA[ */
+<script language="javascript">/* <![CDATA[ */
+/* WP External Links Plugin */
 var gExtLinks = {
 	baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',
 	target: '<?php echo $this->options[ 'target' ] ?>'
 };
-/* ]]> */
-</script>
-<!-- /JS External Links Plugin -->
-<?php endif; ?>
-<?php if ( $this->options[ 'class_name' ] AND $this->options[ 'icon' ] > 0 ): ?>
-<!-- Style External Links Plugin -->
-<style type="text/css">
-	.<?php echo $this->options[ 'class_name' ] ?> {
-		 background: url( <?php echo plugins_url( 'images/external-'. $this->options[ 'icon' ] .'.png', __FILE__ ) ?> ) no-repeat right center;
-		 padding-right: 15px;
-	};
-</style>
-<!-- /Style External Links Plugin -->
-<?php endif; ?>
+/* ]]> */</script>
 <?php
+		endif;
 	}
 
 	/**
 	 * Filter content
+	 * @param string $content
+	 * @return string
 	 */
 	function filter_content( $content ) {
+		// remove style when no icon classes are found
+		if ( strpos( $content, 'ext-icon-' ) == FALSE ) {
+			// remove style with id wp-external-links-css
+			$content = preg_replace( '/<link(.*?)wp-external-links-css(.*?)\/>[\s+]*/i','' ,$content );
+		}
+
+		// get <a> elements
 		$a_pattern = '/<[aA](.*?)>(.*?)<\/[aA][\s+]*>/i';
 		return preg_replace_callback( $a_pattern, array( $this, 'parse_link' ), $content );
 	}
 
+	/**
+	 * Make a clean <a> code
+	 * @param array $match Result of a preg call in filter_content()
+	 * @return string Clean <a> code
+	 */
 	function parse_link( $match ) {
 		$attrs = shortcode_parse_atts( $match[ 1 ] );
 
@@ -168,7 +181,16 @@ var gExtLinks = {
 								: $attrs[ 'rel' ] .' nofollow';
 			}
 
-			// set class
+			// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found
+			if ( $this->options[ 'icon' ] > 0 AND ( empty( $this->options[ 'no_icon_class' ] ) OR strpos( $attrs[ 'class' ], $this->options[ 'no_icon_class' ] ) === FALSE ) AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE  ){
+				$icon_class = 'ext-icon-'. $this->options[ 'icon' ];
+
+				$attrs[ 'class' ] = ( empty( $attrs[ 'class' ] ) )
+									? $icon_class
+									: $attrs[ 'class' ] .' '. $icon_class;
+			}
+
+			// set user-defined class
 			if ( ! empty( $this->options[ 'class_name' ] ) AND ( empty( $attrs[ 'class' ] ) OR strpos( $attrs[ 'class' ], $this->options[ 'class_name' ] ) === FALSE ) ){
 				$attrs[ 'class' ] = ( empty( $attrs[ 'class' ] ) )
 									? $this->options[ 'class_name' ]
@@ -214,10 +236,20 @@ var gExtLinks = {
 ?>
 <script language="javascript">
 jQuery(function( $ ){
-	$( 'input#new_window' ).change(function(){
-		var anim = $( this ).attr( 'checked' ) ? 'slideDown' : 'slideUp';
-		$( 'div.new_window_options' )[ anim ]();
-	})
+	// remove message
+	$( '.settings-error' )
+		.hide()
+		.slideDown( 600 )
+		.delay( 3000 )
+		.slideUp( 600 );
+
+	// option slide effect
+	$( 'input#new_window' )
+		.change(function(){
+			var anim = $( this ).attr( 'checked' ) ? 'slideDown' : 'slideUp';
+			$( 'div.new_window_options' )[ anim ]();
+		})
+		.change();
 })
 </script>
 	<div class="wrap">
@@ -244,28 +276,29 @@ jQuery(function( $ ){
 							<td>
 								<label><input type="checkbox" name="<?php echo $this->options_name ?>[new_window]" id="new_window" value="1" <?php checked( '1', (int) $options['new_window'] ); ?> />
 								<span><?php _e( 'Open external links in a new window (or tab)', $this->domain ) ?></span></label>
-								<div class="new_window_options">
-								<p><label><input type="checkbox" name="<?php echo $this->options_name ?>[use_js]" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
-									<span><?php _e( 'Use JavaScript method (for XHTML Strict compliance)', $this->domain ) ?></span></label>
-								</p><p><span><?php _e( 'Target:', $this->domain ) ?></span>
-									<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_blank" <?php checked( '_blank', $options['target'] ); ?> />
-									<span><?php _e( '_blank, opens every external link in a new window (or tab)', $this->domain ) ?></span></label>
-									<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_new" <?php checked( '_new', $options['target'] ); ?> />
-									<span><?php _e( '_new, opens all external link in the same new window (or tab)', $this->domain ) ?></span></label>
-								</p>
+								<div class="new_window_options" style="display:none">
+									<p><label><input type="checkbox" name="<?php echo $this->options_name ?>[use_js]" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
+										<span><?php _e( 'Use JavaScript method (for XHTML Strict compliance)', $this->domain ) ?></span></label>
+									</p>
+									<p><span><?php _e( 'Target:', $this->domain ) ?></span>
+										<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_blank" <?php checked( '_blank', $options['target'] ); ?> />
+										<span><?php _e( '<code>_blank</code>, opens every external link in a new window (or tab)', $this->domain ) ?></span></label>
+										<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_new" <?php checked( '_new', $options['target'] ); ?> />
+										<span><?php _e( '<code>_new</code>, opens all external link in the same new window (or tab)', $this->domain ) ?></span></label>
+									</p>
 								</div>
 							</td>
 						</tr>
 						<tr>
 							<th><?php _e( 'Add "external"', $this->domain ) ?></th>
 							<td><label><input type="checkbox" id="<?php echo $this->options_name ?>[external]" name="<?php echo $this->options_name ?>[external]" value="1" <?php checked('1', (int) $options['external']); ?> />
-								<span><?php _e( 'Automatically add "external" to the rel-attribute of external links <code>rel="external"</code>', $this->domain ) ?></span></label>
+								<span><?php _e( 'Automatically add <code>"external"</code> to the rel-attribute of external links', $this->domain ) ?></span></label>
 							</td>
 						</tr>
 						<tr>
 							<th><?php _e( 'Add "nofollow"', $this->domain ) ?></th>
 							<td><label><input type="checkbox" id="<?php echo $this->options_name ?>[nofollow]" name="<?php echo $this->options_name ?>[nofollow]" value="1" <?php checked('1', (int) $options['nofollow']); ?> />
-								<span><?php _e( 'Automatically add "nofollow" to the rel-attribute of external links <code>rel="nofollow"</code> (except to links that already contain "follow")', $this->domain ) ?></span></label>
+								<span><?php _e( 'Automatically add <code>"nofollow"</code> to the rel-attribute of external links (except to links that already contain <code>"follow"</code>)', $this->domain ) ?></span></label>
 							</td>
 						</tr>
 						</table>
@@ -284,29 +317,39 @@ jQuery(function( $ ){
 					<fieldset class="options">
 						<table class="form-table">
 						<tr>
-							<th><?php _e( 'Classname', $this->domain ) ?></th>
-							<td><label><input type="text" id="<?php echo $this->options_name ?>[class_name]" name="<?php echo $this->options_name ?>[class_name]" value="<?php echo $options['class_name']; ?>" />
-								<span><?php _e( 'Add this classname to external links (or leave blank)', $this->domain ) ?></span></label></td>
-						</tr>
-						<tr>
 							<th><?php _e( 'Show icon', $this->domain ) ?>
 	 						</th>
 							<td>
-								<div style="width:74%;float:right"><?php _e( 'Icon Example:', $this->domain ) ?>
-									<br/>
-									<br/><img src="<?php echo plugins_url( 'images/link-icon-example.png', __FILE__ ) ?>"	/>
-									<br/>
-									<br/><span class="description"><?php _e( 'Note: icon only works if classname is given', $this->domain ) ?></span>
-								</div>
-								<div style="width:25%;float:left">
-								<label><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="0" <?php checked('0', (int) $options['icon']); ?> />
-								<span><?php _e( 'No icon', $this->domain ) ?></span></label>
-						<?php for ( $x = 1; $x <= 17; $x++ ): ?>
-							<br/><label><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="<?php echo $x ?>" <?php checked( $x, (int) $options['icon'] ); ?> />
-								<img src="<?php echo plugins_url( 'images/external-'. $x .'.png', __FILE__ ) ?>" /></label>
-						<?php endfor; ?>
+								<div>
+									<div style="width:15%;float:left">
+										<label><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="0" <?php checked('0', (int) $options['icon']); ?> />
+										<span><?php _e( 'No icon', $this->domain ) ?></span></label>
+									<?php for ( $x = 1; $x <= 20; $x++ ): ?>
+										<br/>
+										<label title="<?php _e( 'Choose this icon to show in all external links. You can also add the class \'ext-icon-'. $x .'\' to a specific link.' ) ?>"><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="<?php echo $x ?>" <?php checked( $x, (int) $options['icon'] ); ?> />
+										<img src="<?php echo plugins_url( 'images/external-'. $x .'.png', __FILE__ ) ?>" /></label>
+										<?php if ( $x % 5 == 0 ): ?>
+									</div>
+									<div style="width:15%;float:left">
+										<?php endif; ?>
+									<?php endfor; ?>
+									</div>
+									<div style="width:29%;float:left;"><?php _e( 'Example:', $this->domain ) ?>
+										<br/><img src="<?php echo plugins_url( 'images/link-icon-example.png', __FILE__ ) ?>"	/>
+									</div>
+									<br style="clear:both" />
 								</div>
 							</td>
+						</tr>
+						<tr>
+							<th><?php _e( 'No-Icon Class', $this->domain ) ?></th>
+							<td><label><input type="text" id="<?php echo $this->options_name ?>[no_icon_class]" name="<?php echo $this->options_name ?>[no_icon_class]" value="<?php echo $options['no_icon_class']; ?>" />
+								<span><?php _e( 'Use this class when a link should not show any icon', $this->domain ) ?></span></label></td>
+						</tr>
+						<tr>
+							<th><?php _e( 'Additional Class (optional)', $this->domain ) ?></th>
+							<td><label><input type="text" id="<?php echo $this->options_name ?>[class_name]" name="<?php echo $this->options_name ?>[class_name]" value="<?php echo $options['class_name']; ?>" />
+								<span><?php _e( 'Add extra class to external links (or leave blank)', $this->domain ) ?></span></label></td>
 						</tr>
 						</table>
 					</fieldset>
@@ -322,7 +365,7 @@ jQuery(function( $ ){
 		<div style="margin:0 5px;">
 			<div class="postbox">
 				<div class="handlediv" title="<?php _e( 'Click to toggle' ) ?>"><br/></div>
-				<h3 class="hndle"><?php _e( 'About' ) ?> WP External Links</h3>
+				<h3 class="hndle"><?php _e( 'About' ) ?> WP External Links (v<?php echo $this->version ?>)</h3>
 				<div class="inside">
 					<ul>
 						<li><a href="<?php echo plugins_url( 'readme.txt', __FILE__ ) ?>" target="_blank">readme.txt</a></li>
@@ -381,6 +424,9 @@ jQuery(function( $ ){
 			$this->options['external'] = ! empty( $saved_options['external'] );
 			$this->options['nofollow'] = ! empty( $saved_options['nofollow'] );
 			$this->options['icon'] = $saved_options['icon'];
+			$this->options['no_icon_class'] = ( ! isset( $saved_options['no_icon_class'] ) )
+											? $this->options['no_icon_class']
+											: $saved_options['no_icon_class'];
 			$this->options['class_name'] = $saved_options['class_name'];
 		}
 	}

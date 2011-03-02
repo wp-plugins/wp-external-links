@@ -1,4 +1,4 @@
-// WP External Links Plugin
+/* WP External Links Plugin */
 (function( w, $ ){
 
 	var addEvt = function ( el, evt, fn ) {
