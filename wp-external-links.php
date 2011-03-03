@@ -4,7 +4,7 @@ Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/
 Description: Manage the external links on your site: opening in a new window, set link icon, set "external", set "nofollow", set css-class.
 Author: Victor Villaverde Laan
-Version: 0.20
+Version: 0.21
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -19,7 +19,7 @@ class WP_External_Links {
 	 * Current version
 	 * @var string
 	 */
-	var $version = '0.20';
+	var $version = '0.21';
 
 	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
@@ -139,15 +139,17 @@ var gExtLinks = {
 	 * @return string
 	 */
 	function filter_content( $content ) {
+		// get <a> elements
+		$a_pattern = '/<[aA](.*?)>(.*?)<\/[aA][\s+]*>/i';
+		$content = preg_replace_callback( $a_pattern, array( $this, 'parse_link' ), $content );
+
 		// remove style when no icon classes are found
-		if ( strpos( $content, 'ext-icon-' ) == FALSE ) {
+		if ( strpos( $content, 'ext-icon-' ) === FALSE ) {
 			// remove style with id wp-external-links-css
 			$content = preg_replace( '/<link(.*?)wp-external-links-css(.*?)\/>[\s+]*/i','' ,$content );
 		}
 
-		// get <a> elements
-		$a_pattern = '/<[aA](.*?)>(.*?)<\/[aA][\s+]*>/i';
-		return preg_replace_callback( $a_pattern, array( $this, 'parse_link' ), $content );
+		return $content;
 	}
 
 	/**

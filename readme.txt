@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.20
+Stable tag: 0.21
 
 Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon or additional css-class.
 
@@ -36,6 +36,9 @@ More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-pl
 1. Icon on the Site
 
 == Changelog ==
+
+= 0.21 =
+* Solved bug removing icon stylesheet
 
 = 0.20 =
 * Put icon styles in external stylesheet
