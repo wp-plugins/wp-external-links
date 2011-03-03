@@ -15,8 +15,9 @@ Manage the external links on your site.
 * Opening external links in a new window
 * Adding "external" and/or "nofollow" value to rel-attribute
 * Choose an icon for external links
-* Choose a No-Icon class and an additional class (for your own styling)
+* Set a No-Icon class and/or an additional class (for your own styling)
 * Unobtrusive JavaScript method wich is XHTML Strict compliant
+* Scans hole page (posts, comments, widgets etc)
 * Supports PHP4.3+ and up to latest WP version
 
 More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
