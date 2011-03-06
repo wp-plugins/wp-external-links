@@ -2,9 +2,9 @@
 /*
 Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/
-Description: Manage the external links on your site: opening in a new window, set link icon, set "external", set "nofollow", set css-class.
+Description: Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon class or additional css-class.
 Author: Victor Villaverde Laan
-Version: 0.21
+Version: 0.30
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -19,7 +19,7 @@ class WP_External_Links {
 	 * Current version
 	 * @var string
 	 */
-	var $version = '0.21';
+	var $version = '0.30';
 
 	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
@@ -38,13 +38,17 @@ class WP_External_Links {
 	 * @var array
 	 */
 	var $options = array(
-			'new_window' => TRUE,
-			'use_js' => TRUE,
-			'target' => '_blank',
-			'external' => TRUE,
-			'nofollow' => TRUE,
-			'icon' => 1,
+			'target' => '_none',
+			'use_js' => 1,
+			'external' => 1,
+			'nofollow' => 1,
+			'filter_whole_page' => 1,
+			'filter_posts' => 1,
+			'filter_comments' => 1,
+			'filter_widgets' => 1,
+			'icon' => 0,
 			'no_icon_class' => 'no-ext-icon',
+			'no_icon_same_window' => 0,
 			'class_name' => 'ext-link',
 		);
 
@@ -61,17 +65,49 @@ class WP_External_Links {
 	function __construct() {
 		// set option values
 		$this->_set_options();
-		
+
 		// load text domain for translations
 		load_plugin_textdomain( $this->domain, dirname( __FILE__ ) . '/lang/', basename( dirname(__FILE__) ) . '/lang/' );
 
 		// add actions
-		add_action( 'init', array( $this, 'init' ), 10000 );
-		add_action( 'admin_init', array( $this, 'admin_init' ), 10000 );
-		add_action( 'admin_menu', array( $this, 'admin_menu' ), 10000 );
+		add_action( 'init', array( $this, 'init' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 
 		// add filters
-		add_action( 'wp', array( $this, 'wp' ), 10000 );
+		if ( $this->options[ 'filter_whole_page' ] ) {
+			add_action( 'wp', array( $this, 'wp' ), 1 );
+		} else {
+			// set filter priority
+			$priority = 1000000000;
+
+			// content
+			if ( $this->options[ 'filter_posts' ] ) {
+				add_filter( 'the_title', array( $this, 'filter_content' ), $priority );
+				add_filter( 'the_content', array( $this, 'filter_content' ), $priority );
+				add_filter( 'the_excerpt', array( $this, 'filter_content' ), $priority );
+				add_filter( 'get_the_excerpt', array( $this, 'filter_content' ), $priority );
+			}
+
+			// comments
+			if ( $this->options[ 'filter_comments' ] ) {
+				add_filter( 'comment_text', array( $this, 'filter_content' ), $priority );
+				add_filter( 'comment_excerpt', array( $this, 'filter_content' ), $priority );
+				add_filter( 'comment_url', array( $this, 'filter_content' ), $priority );
+				add_filter( 'get_comment_author_url', array( $this, 'filter_content' ), $priority );
+				add_filter( 'get_comment_author_link', array( $this, 'filter_content' ), $priority );
+				add_filter( 'get_comment_author_url_link', array( $this, 'filter_content' ), $priority );
+			}
+
+			// widgets ( only text widgets )
+			if ( $this->options[ 'filter_widgets' ] ) {
+				add_filter( 'widget_title', array( $this, 'filter_content' ), $priority );
+				add_filter( 'widget_text', array( $this, 'filter_content' ), $priority );
+
+				// Only if Widget Logic plugin is installed
+				add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
+			}
+		}
 
 		// set uninstall hook
 		if ( function_exists( 'register_deactivation_hook' ) )
@@ -120,14 +156,14 @@ class WP_External_Links {
 	 * Callback wp_head
 	 */
 	function wp_head() {
-		if ( $this->options[ 'use_js' ] ):
+		if ( $this->options[ 'use_js' ] AND $this->options[ 'target' ] != '_none' ):
+			$excludeClass = ( $this->options[ 'no_icon_same_window' ] AND ! empty( $this->options[ 'no_icon_class' ] ) )
+							? $this->options[ 'no_icon_class' ]
+							: '';
 ?>
 <script language="javascript">/* <![CDATA[ */
 /* WP External Links Plugin */
-var gExtLinks = {
-	baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',
-	target: '<?php echo $this->options[ 'target' ] ?>'
-};
+var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>' ,target: '<?php echo $this->options[ 'target' ] ?>',excludeClass: '<?php echo $excludeClass ?>' };
 /* ]]> */</script>
 <?php
 		endif;
@@ -151,6 +187,8 @@ var gExtLinks = {
 
 		return $content;
 	}
+
+
 
 	/**
 	 * Make a clean <a> code
@@ -200,7 +238,7 @@ var gExtLinks = {
 			}
 
 			// set target
-			if ( $this->options[ 'new_window' ] AND ! $this->options[ 'use_js' ] )
+			if ( $this->options[ 'target' ] != '_none' AND ! $this->options[ 'use_js' ] AND ( ! $this->options[ 'no_icon_same_window' ] OR empty( $this->options[ 'no_icon_class' ] ) OR strpos( $attrs[ 'class' ], $this->options[ 'no_icon_class' ] ) === FALSE ) )
 				$attrs[ 'target' ] = $this->options[ 'target' ];
 		}
 
@@ -245,11 +283,26 @@ jQuery(function( $ ){
 		.delay( 3000 )
 		.slideUp( 600 );
 
-	// option slide effect
-	$( 'input#new_window' )
+	// option new_window slide effect
+	$( 'input.field_target' )
 		.change(function(){
-			var anim = $( this ).attr( 'checked' ) ? 'slideDown' : 'slideUp';
-			$( 'div.new_window_options' )[ anim ]();
+			if ( $( this ).attr( 'checked' ) ) {
+				$( 'input.field_use_js' ).attr( 'disabled', $( this ).val() == '_none' );
+			}
+		})
+		.change();
+
+	// option filter whole page
+	$( 'input#filter_whole_page' )
+		.change(function(){
+			var $i = $( 'input#filter_posts, input#filter_comments, input#filter_widgets' );
+
+			if ( $( this ).attr( 'checked' ) ) {
+				$i.attr( 'disabled', true )
+					.attr( 'checked', true );
+			} else {
+				$i.attr( 'disabled', false )
+			}
 		})
 		.change();
 })
@@ -274,38 +327,50 @@ jQuery(function( $ ){
 					<fieldset class="options">
 						<table class="form-table">
 						<tr>
-							<th><?php _e( 'Open in new window', $this->domain ) ?></th>
-							<td>
-								<label><input type="checkbox" name="<?php echo $this->options_name ?>[new_window]" id="new_window" value="1" <?php checked( '1', (int) $options['new_window'] ); ?> />
-								<span><?php _e( 'Open external links in a new window (or tab)', $this->domain ) ?></span></label>
-								<div class="new_window_options" style="display:none">
-									<p><label><input type="checkbox" name="<?php echo $this->options_name ?>[use_js]" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
-										<span><?php _e( 'Use JavaScript method (for XHTML Strict compliance)', $this->domain ) ?></span></label>
-									</p>
-									<p><span><?php _e( 'Target:', $this->domain ) ?></span>
-										<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_blank" <?php checked( '_blank', $options['target'] ); ?> />
-										<span><?php _e( '<code>_blank</code>, opens every external link in a new window (or tab)', $this->domain ) ?></span></label>
-										<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" value="_new" <?php checked( '_new', $options['target'] ); ?> />
-										<span><?php _e( '<code>_new</code>, opens all external link in the same new window (or tab)', $this->domain ) ?></span></label>
-									</p>
-								</div>
+							<th><?php _e( 'Target external links', $this->domain ) ?></th>
+							<td class="target_external_links">
+								<label><input type="radio" name="<?php echo $this->options_name ?>[target]" class="field_target" value="_blank" <?php checked( '_blank', $options['target'] ); ?> />
+								<span><?php _e( '<code>_blank</code>, open every external link in a new window or tab', $this->domain ) ?></span></label>
+								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" class="field_target" value="_top" <?php checked( '_top', $options['target'] ); ?> />
+								<span><?php _e( '<code>_top</code>, open in current window or tab, with no frames', $this->domain ) ?></span></label>
+								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" class="field_target" value="_new" <?php checked( '_new', $options['target'] ); ?> />
+								<span><?php _e( '<code>_new</code>, open new window the first time and use this window for each external link', $this->domain ) ?></span></label>
+								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" class="field_target" value="_none" <?php checked( '_none', $options['target'] ); ?> />
+								<span><?php _e( '<code>_none</code>, open in current window or tab', $this->domain ) ?></span></label>
+								<br/>
+								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[use_js]" class="field_use_js" value="0" <?php checked( '0', (int) $options['use_js'] ); ?> />
+								<span><?php _e( 'Set target attribute in HTML code (XHTML Transitional compliant)', $this->domain ) ?></span></label>
+								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[use_js]" class="field_use_js" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
+								<span><?php _e( 'Use JavaScript for opening links in target (recommended, XHTML Strict compliant)', $this->domain ) ?></span></label>
 							</td>
 						</tr>
 						<tr>
 							<th><?php _e( 'Add "external"', $this->domain ) ?></th>
 							<td><label><input type="checkbox" id="<?php echo $this->options_name ?>[external]" name="<?php echo $this->options_name ?>[external]" value="1" <?php checked('1', (int) $options['external']); ?> />
-								<span><?php _e( 'Automatically add <code>"external"</code> to the rel-attribute of external links', $this->domain ) ?></span></label>
+								<span><?php _e( 'Add <code>"external"</code> to the rel-attribute of external links', $this->domain ) ?></span></label>
 							</td>
 						</tr>
 						<tr>
 							<th><?php _e( 'Add "nofollow"', $this->domain ) ?></th>
 							<td><label><input type="checkbox" id="<?php echo $this->options_name ?>[nofollow]" name="<?php echo $this->options_name ?>[nofollow]" value="1" <?php checked('1', (int) $options['nofollow']); ?> />
-								<span><?php _e( 'Automatically add <code>"nofollow"</code> to the rel-attribute of external links (except to links that already contain <code>"follow"</code>)', $this->domain ) ?></span></label>
+								<span><?php _e( 'Add <code>"nofollow"</code> to the rel-attribute of external links (unless link has <code>"follow"</code>)', $this->domain ) ?></span></label>
 							</td>
 						</tr>
+							<th><?php _e( 'Has effect on', $this->domain ) ?></th>
+							<td>
+								<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_whole_page]" id="filter_whole_page" value="1" <?php checked( '1', (int) $options['filter_whole_page'] ); ?> />
+								<span><?php _e( 'All contents (the whole <code>&lt;body&gt;</code>)', $this->domain ) ?></span></label>
+								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_posts]" id="filter_posts" value="1" <?php checked( '1', (int) $options['filter_posts'] ); ?> />
+										<span><?php _e( 'Post contents', $this->domain ) ?></span></label>
+								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_comments]" id="filter_comments" value="1" <?php checked( '1', (int) $options['filter_comments'] ); ?> />
+										<span><?php _e( 'Comments', $this->domain ) ?></span></label>
+								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_widgets]" id="filter_widgets" value="1" <?php checked( '1', (int) $options['filter_widgets'] ); ?> />
+										<span><?php _e( 'Widgets (only text widgets)', $this->domain ) ?></span></label>
+								<br/>
+								<br/><span class="description"><?php _e( 'Note: all <code>&lt;a&gt;</code> tags in the selected contents will be converted to XHTML valid code' ) ?></span>
+							</td>
 						</table>
 					</fieldset>
-					<p class="description"><?php _e( 'This plugin automatically cleans up the code of <code>&lt;a&gt;</code> tags and makes them XHTML valid' ) ?></p>
 					<p class="submit">
 						<input class="button-primary" type="submit" value="<?php _e( 'Save Changes' ) ?>" />
 					</p>
@@ -328,7 +393,7 @@ jQuery(function( $ ){
 										<span><?php _e( 'No icon', $this->domain ) ?></span></label>
 									<?php for ( $x = 1; $x <= 20; $x++ ): ?>
 										<br/>
-										<label title="<?php _e( 'Choose this icon to show in all external links. You can also add the class \'ext-icon-'. $x .'\' to a specific link.' ) ?>"><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="<?php echo $x ?>" <?php checked( $x, (int) $options['icon'] ); ?> />
+										<label title="<?php echo sprintf( __( 'Icon %1$s: choose this icon to show for all external links or add the class \'ext-icon-%1$s\' to a specific link.' ), $x ) ?>"><input type="radio" name="<?php echo $this->options_name ?>[icon]" value="<?php echo $x ?>" <?php checked( $x, (int) $options['icon'] ); ?> />
 										<img src="<?php echo plugins_url( 'images/external-'. $x .'.png', __FILE__ ) ?>" /></label>
 										<?php if ( $x % 5 == 0 ): ?>
 									</div>
@@ -346,7 +411,10 @@ jQuery(function( $ ){
 						<tr>
 							<th><?php _e( 'No-Icon Class', $this->domain ) ?></th>
 							<td><label><input type="text" id="<?php echo $this->options_name ?>[no_icon_class]" name="<?php echo $this->options_name ?>[no_icon_class]" value="<?php echo $options['no_icon_class']; ?>" />
-								<span><?php _e( 'Use this class when a link should not show any icon', $this->domain ) ?></span></label></td>
+								<span><?php _e( 'Use this class when a link should not show any icon', $this->domain ) ?></span></label>
+								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[no_icon_same_window]" id="no_icon_same_window" value="1" <?php checked( '1', (int) $options['no_icon_same_window'] ); ?> />
+								<span><?php _e( 'Always open no-icon links in current window', $this->domain ) ?></span></label>
+							</td>
 						</tr>
 						<tr>
 							<th><?php _e( 'Additional Class (optional)', $this->domain ) ?></th>
@@ -410,26 +478,14 @@ jQuery(function( $ ){
 		// set options
 		$saved_options = get_option( $this->options_name );
 
+		// set all options
 		if ( ! empty( $saved_options ) ) {
-			// set saved option values
-			if ( isset( $saved_options['new_window'] ) AND ! isset( $saved_options['target'] ) ) {
-				// convert values from version <= 0.11
-				$new_window = ( empty( $saved_options['new_window'] ) ) ? $this->options['new_window'] : $saved_options['new_window'];
-				$this->options['new_window'] = ( $new_window != 1 );
-				$this->options['use_js'] = ( $new_window == 4 OR $new_window == 5 );
-				$this->options['target'] = ( $new_window == 2 OR $new_window == 4 ) ? '_blank' : '_new';
-			} else {
-				$this->options['new_window'] = ! empty( $saved_options['new_window'] );
-				$this->options['use_js'] = ! empty( $saved_options['use_js'] );
-				$this->options['target'] = $saved_options['target'];
+			foreach ( $this->options AS $key => $option ) {
+				if ( ! isset( $saved_options[ $key ] ) AND in_array( $key, array( 'target', 'use_js', 'icon' ) ) )
+					continue;
+
+				$this->options[ $key ] = $saved_options[ $key ];
 			}
-			$this->options['external'] = ! empty( $saved_options['external'] );
-			$this->options['nofollow'] = ! empty( $saved_options['nofollow'] );
-			$this->options['icon'] = $saved_options['icon'];
-			$this->options['no_icon_class'] = ( ! isset( $saved_options['no_icon_class'] ) )
-											? $this->options['no_icon_class']
-											: $saved_options['no_icon_class'];
-			$this->options['class_name'] = $saved_options['class_name'];
 		}
 	}
 

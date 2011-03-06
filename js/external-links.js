@@ -14,10 +14,11 @@
 			}
 		},
 		init = function () {
-			setExtLinks();
+			if ( typeof wpExtLinks != 'undefined' )
+				setExtLinks( wpExtLinks );
 		};
 
-	function setExtLinks() {
+	function setExtLinks( options ) {
 		var links = w.document.getElementsByTagName( 'a' );
 
 		// check each <a> element
@@ -26,17 +27,18 @@
 				href = a.href ? a.href.toLowerCase() : '',
 				rel = a.rel ? a.rel.toLowerCase() : '';
 
-			if ( a.href	&& ( rel.indexOf( 'external' ) > -1
-								|| ( ( href.indexOf( gExtLinks.baseUrl ) === -1 ) &&
+			if ( a.href && ( options.excludeClass.length == 0 || a.className.indexOf( options.excludeClass ) )
+						&& ( rel.indexOf( 'external' ) > -1
+								|| ( ( href.indexOf( options.baseUrl ) === -1 ) &&
 										( href.substr( 0, 7 ) == 'http://'
 											|| href.substr( 0, 8 ) == 'https://'
 											|| href.substr( 0, 6 ) == 'ftp://'  ) ) ) ) {
 
-				// click event
+				// click event for opening in a new window
 				addEvt( a, 'click', function( a ){
 					return function( e ){
 						// open link in a new window
-						var n = w.open( a.href, gExtLinks.target );
+						var n = w.open( a.href, options.target );
 						n.focus();
 
 						// prevent default
@@ -50,10 +52,10 @@
 	}
 
 	if ( $ ) {
-		// jQuery method
+		// jQuery DOMready method
 		$( init );
 	} else {
-		// when jQuery is not available
+		// use onload when jQuery not available
 		addEvt( w, 'load', init );
 	}
 

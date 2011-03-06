@@ -1,23 +1,23 @@
-=== WP External Links (new window, icon, "nofollow") ===
+=== WP External Links ===
 Contributors: freelancephp
-Tags: links, external, new window, icon, target, _blank, _new, rel, nofollow, javascript, xhtml strict
+Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.21
+Stable tag: 0.30
 
-Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon or additional css-class.
+Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon class or additional css-class.
 
 == Description ==
 
 Manage the external links on your site.
 
 = Features =
-* Opening external links in a new window
-* Adding "external" and/or "nofollow" value to rel-attribute
+* Open external links in a new window
+* Add "external" and/or "nofollow" value to rel-attribute
 * Choose an icon for external links
 * Set a No-Icon class and/or an additional class (for your own styling)
-* Unobtrusive JavaScript method wich is XHTML Strict compliant
-* Scans hole page (posts, comments, widgets etc)
+* Use JavaScript method (unobtrusive) which is XHTML Strict compliant
+* Scan whole page (posts, comments, widgets etc)
 * Supports PHP4.3+ and up to latest WP version
 
 More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
@@ -37,6 +37,10 @@ More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-pl
 1. Icon on the Site
 
 == Changelog ==
+
+= 0.30 =
+* Improved Admin Options, f.e. target option looks more like the Blogroll target option
+* Added option for choosing which content should be filtered
 
 = 0.21 =
 * Solved bug removing icon stylesheet
