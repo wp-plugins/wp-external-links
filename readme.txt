@@ -5,7 +5,7 @@ Requires at least: 2.7.0
 Tested up to: 3.1.0
 Stable tag: 0.30
 
-Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon class or additional css-class.
+Manage external links on your site: open in a new window, set link icon, set "external" and/or "nofollow", set No-Icon class.
 
 == Description ==
 
@@ -23,9 +23,10 @@ Manage the external links on your site.
 More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
 
 == Installation ==
-
-1. Upload `wp-external-links.zip` to the `/wp-content/plugins/` directory or add the plugin with 'Add Plugins' in the admin menu
-1. Be sure the plugin is activated in the Plugin-list
+1. Go to `Plugins` in the Admin menu
+1. Click on the button `Add new`
+1. Search for `WP External Links` and click 'Install Now' or click on the `upload` link to upload `wp-external-links.zip`
+1. Click on 'Activate plugin'
 
 == Frequently Asked Questions ==
 
@@ -65,6 +66,11 @@ More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-pl
 * Features: opening in a new window, set link icon, set "external", set "nofollow", set css-class
 * Replaces external links by clean XHTML <a> tags
 * Internalization implemented (no language files yet)
+
+== Upgrade Notice ==
+
+= 0.30 =
+Please after updating, check if the settings on `Setttings` > `External Links` are still correct.
 
 == Other notes ==
 * Title icon on Admin Options Page was made by [FatCow Web Hosting](http://www.fatcow.com/) taken form [iconfinder](http://findicons.com/icon/164579/link_go?id=427009)
