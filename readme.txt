@@ -3,30 +3,29 @@ Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.30
+Stable tag: 0.31
 
-Manage external links on your site: open in a new window, set link icon, set "external" and/or "nofollow", set No-Icon class.
+Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 
 == Description ==
 
 Manage the external links on your site.
 
 = Features =
-* Open external links in a new window
-* Add "external" and/or "nofollow" value to rel-attribute
-* Choose an icon for external links
-* Set a No-Icon class and/or an additional class (for your own styling)
-* Use JavaScript method (unobtrusive) which is XHTML Strict compliant
-* Scan whole page (posts, comments, widgets etc)
-* Supports PHP4.3+ and up to latest WP version
+* Open in a new window/tab
+* Set link icon
+* Add "external"
+* Add "nofollow"
+* Set no-icon class
+* Set additional classes (for your own styling)
 
-More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-plugin)
+Supports PHP4.3+ and up to latest WP version.
 
 == Installation ==
 1. Go to `Plugins` in the Admin menu
 1. Click on the button `Add new`
 1. Search for `WP External Links` and click 'Install Now' or click on the `upload` link to upload `wp-external-links.zip`
-1. Click on 'Activate plugin'
+1. Click on `Activate plugin`
 
 == Frequently Asked Questions ==
 
@@ -35,9 +34,12 @@ More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-pl
 == Screenshots ==
 
 1. Admin Settings Page
-1. Icon on the Site
+1. Link Icon on the Site
 
 == Changelog ==
+
+= 0.31 =
+* Small cosmetical adjustments
 
 = 0.30 =
 * Improved Admin Options, f.e. target option looks more like the Blogroll target option
@@ -69,8 +71,8 @@ More info at [FreelancePHP.net](http://www.freelancephp.net/wp-external-links-pl
 
 == Upgrade Notice ==
 
-= 0.30 =
-Please after updating, check if the settings on `Setttings` > `External Links` are still correct.
 
 == Other notes ==
+
+= Credits =
 * Title icon on Admin Options Page was made by [FatCow Web Hosting](http://www.fatcow.com/) taken form [iconfinder](http://findicons.com/icon/164579/link_go?id=427009)

@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: WP External Links
-Plugin URI: http://www.freelancephp.net/
-Description: Manage the external links on your site: opening in a new window, set link icon, set "external" and/or "nofollow", set No-Icon class or additional css-class.
+Plugin URI: http://www.freelancephp.net/wp-external-links-plugin
+Description: Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 Author: Victor Villaverde Laan
-Version: 0.30
+Version: 0.31
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -19,7 +19,7 @@ class WP_External_Links {
 	 * Current version
 	 * @var string
 	 */
-	var $version = '0.30';
+	var $version = '0.31';
 
 	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
@@ -105,7 +105,8 @@ class WP_External_Links {
 				add_filter( 'widget_text', array( $this, 'filter_content' ), $priority );
 
 				// Only if Widget Logic plugin is installed
-				add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
+				// @todo Doesn't work and cannot find another way to filter all widget contents
+				//add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
 			}
 		}
 
@@ -129,7 +130,7 @@ class WP_External_Links {
 	function admin_menu() {
 		if ( function_exists( 'add_options_page' ) AND current_user_can( 'manage_options' ) ) {
 			// add options page
-			$page = add_options_page( 'External Links', 'External Links',
+			$page = add_options_page( __( 'External Links', $this->domain ), __( 'External Links', $this->domain ),
 								'manage_options', __FILE__, array( $this, 'options_page' ) );
 		}
 	}
@@ -163,7 +164,7 @@ class WP_External_Links {
 ?>
 <script language="javascript">/* <![CDATA[ */
 /* WP External Links Plugin */
-var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>' ,target: '<?php echo $this->options[ 'target' ] ?>',excludeClass: '<?php echo $excludeClass ?>' };
+var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php echo $this->options[ 'target' ] ?>',excludeClass: '<?php echo $excludeClass ?>' };
 /* ]]> */</script>
 <?php
 		endif;
@@ -283,15 +284,6 @@ jQuery(function( $ ){
 		.delay( 3000 )
 		.slideUp( 600 );
 
-	// option new_window slide effect
-	$( 'input.field_target' )
-		.change(function(){
-			if ( $( this ).attr( 'checked' ) ) {
-				$( 'input.field_use_js' ).attr( 'disabled', $( this ).val() == '_none' );
-			}
-		})
-		.change();
-
 	// option filter whole page
 	$( 'input#filter_whole_page' )
 		.change(function(){
@@ -308,7 +300,7 @@ jQuery(function( $ ){
 })
 </script>
 	<div class="wrap">
-		<div class="icon32" id="icon-options-custom" style="background:url( <?php echo plugins_url( 'images/icon.png', __FILE__ ) ?> ) no-repeat 50% 50%"><br></div>
+		<div class="icon32" id="icon-options-custom" style="background:url( <?php echo plugins_url( 'images/icon-wp-external-links.png', __FILE__ ) ?> ) no-repeat 50% 50%"><br></div>
 		<h2><?php _e( 'External Links Settings' ) ?></h2>
 
 		<form method="post" action="options.php">
@@ -327,7 +319,7 @@ jQuery(function( $ ){
 					<fieldset class="options">
 						<table class="form-table">
 						<tr>
-							<th><?php _e( 'Target external links', $this->domain ) ?></th>
+							<th><?php _e( 'Set target for external links', $this->domain ) ?></th>
 							<td class="target_external_links">
 								<label><input type="radio" name="<?php echo $this->options_name ?>[target]" class="field_target" value="_blank" <?php checked( '_blank', $options['target'] ); ?> />
 								<span><?php _e( '<code>_blank</code>, open every external link in a new window or tab', $this->domain ) ?></span></label>
@@ -337,38 +329,38 @@ jQuery(function( $ ){
 								<span><?php _e( '<code>_new</code>, open new window the first time and use this window for each external link', $this->domain ) ?></span></label>
 								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[target]" class="field_target" value="_none" <?php checked( '_none', $options['target'] ); ?> />
 								<span><?php _e( '<code>_none</code>, open in current window or tab', $this->domain ) ?></span></label>
-								<br/>
-								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[use_js]" class="field_use_js" value="0" <?php checked( '0', (int) $options['use_js'] ); ?> />
-								<span><?php _e( 'Set target attribute in HTML code (XHTML Transitional compliant)', $this->domain ) ?></span></label>
-								<br/><label><input type="radio" name="<?php echo $this->options_name ?>[use_js]" class="field_use_js" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
-								<span><?php _e( 'Use JavaScript for opening links in target (recommended, XHTML Strict compliant)', $this->domain ) ?></span></label>
 							</td>
 						</tr>
 						<tr>
-							<th><?php _e( 'Add "external"', $this->domain ) ?></th>
+							<th>&nbsp;</th>
+							<td>
+								<label><input type="checkbox" name="<?php echo $this->options_name ?>[use_js]" class="field_use_js" value="1" <?php checked( '1', (int) $options['use_js'] ); ?> />
+								<span><?php _e( 'Use JavaScript method (recommended, XHTML Strict compliant)', $this->domain ) ?></span></label>
+							</td>
+						</tr>
+						<tr>
+							<th><?php _e( 'Add to "rel" attribute', $this->domain ) ?></th>
 							<td><label><input type="checkbox" id="<?php echo $this->options_name ?>[external]" name="<?php echo $this->options_name ?>[external]" value="1" <?php checked('1', (int) $options['external']); ?> />
 								<span><?php _e( 'Add <code>"external"</code> to the rel-attribute of external links', $this->domain ) ?></span></label>
-							</td>
-						</tr>
-						<tr>
-							<th><?php _e( 'Add "nofollow"', $this->domain ) ?></th>
-							<td><label><input type="checkbox" id="<?php echo $this->options_name ?>[nofollow]" name="<?php echo $this->options_name ?>[nofollow]" value="1" <?php checked('1', (int) $options['nofollow']); ?> />
+								<br/><label><input type="checkbox" id="<?php echo $this->options_name ?>[nofollow]" name="<?php echo $this->options_name ?>[nofollow]" value="1" <?php checked('1', (int) $options['nofollow']); ?> />
 								<span><?php _e( 'Add <code>"nofollow"</code> to the rel-attribute of external links (unless link has <code>"follow"</code>)', $this->domain ) ?></span></label>
 							</td>
 						</tr>
-							<th><?php _e( 'Has effect on', $this->domain ) ?></th>
+						<tr>
+							<th><?php _e( 'Options have effect on', $this->domain ) ?></th>
 							<td>
 								<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_whole_page]" id="filter_whole_page" value="1" <?php checked( '1', (int) $options['filter_whole_page'] ); ?> />
 								<span><?php _e( 'All contents (the whole <code>&lt;body&gt;</code>)', $this->domain ) ?></span></label>
-								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_posts]" id="filter_posts" value="1" <?php checked( '1', (int) $options['filter_posts'] ); ?> />
+								<br/>&nbsp;&nbsp;<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_posts]" id="filter_posts" value="1" <?php checked( '1', (int) $options['filter_posts'] ); ?> />
 										<span><?php _e( 'Post contents', $this->domain ) ?></span></label>
-								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_comments]" id="filter_comments" value="1" <?php checked( '1', (int) $options['filter_comments'] ); ?> />
+								<br/>&nbsp;&nbsp;<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_comments]" id="filter_comments" value="1" <?php checked( '1', (int) $options['filter_comments'] ); ?> />
 										<span><?php _e( 'Comments', $this->domain ) ?></span></label>
-								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_widgets]" id="filter_widgets" value="1" <?php checked( '1', (int) $options['filter_widgets'] ); ?> />
-										<span><?php _e( 'Widgets (only text widgets)', $this->domain ) ?></span></label>
+								<br/>&nbsp;&nbsp;<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_widgets]" id="filter_widgets" value="1" <?php checked( '1', (int) $options['filter_widgets'] ); ?> />
+										<span><?php _e( 'Text widgets', $this->domain ) ?></span></label>
 								<br/>
 								<br/><span class="description"><?php _e( 'Note: all <code>&lt;a&gt;</code> tags in the selected contents will be converted to XHTML valid code' ) ?></span>
 							</td>
+						</tr>
 						</table>
 					</fieldset>
 					<p class="submit">
@@ -401,7 +393,7 @@ jQuery(function( $ ){
 										<?php endif; ?>
 									<?php endfor; ?>
 									</div>
-									<div style="width:29%;float:left;"><?php _e( 'Example:', $this->domain ) ?>
+									<div style="width:29%;float:left;"><span class="description"><?php _e( 'Example:', $this->domain ) ?></span>
 										<br/><img src="<?php echo plugins_url( 'images/link-icon-example.png', __FILE__ ) ?>"	/>
 									</div>
 									<br style="clear:both" />
@@ -417,9 +409,9 @@ jQuery(function( $ ){
 							</td>
 						</tr>
 						<tr>
-							<th><?php _e( 'Additional Class (optional)', $this->domain ) ?></th>
+							<th><?php _e( 'Additional Classes (optional)', $this->domain ) ?></th>
 							<td><label><input type="text" id="<?php echo $this->options_name ?>[class_name]" name="<?php echo $this->options_name ?>[class_name]" value="<?php echo $options['class_name']; ?>" />
-								<span><?php _e( 'Add extra class to external links (or leave blank)', $this->domain ) ?></span></label></td>
+								<span><?php _e( 'Add extra classes to external links (or leave blank)', $this->domain ) ?></span></label></td>
 						</tr>
 						</table>
 					</fieldset>
@@ -435,13 +427,14 @@ jQuery(function( $ ){
 		<div style="margin:0 5px;">
 			<div class="postbox">
 				<div class="handlediv" title="<?php _e( 'Click to toggle' ) ?>"><br/></div>
-				<h3 class="hndle"><?php _e( 'About' ) ?> WP External Links (v<?php echo $this->version ?>)</h3>
+				<h3 class="hndle"><?php _e( 'About' ) ?>...</h3>
 				<div class="inside">
+					<h4><img src="<?php echo plugins_url( 'images/icon-wp-external-links.png', __FILE__ ) ?>" width="16" height="16" /> WP External Links (v<?php echo $this->version ?>)</h4>
+					<p><?php _e( 'Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.', $this->domain ) ?></p>
 					<ul>
-						<li><a href="<?php echo plugins_url( 'readme.txt', __FILE__ ) ?>" target="_blank">readme.txt</a></li>
-						<li><a href="http://www.freelancephp.net/wp-external-links-plugin/" target="_blank"><?php _e( 'Plugin on ', $this->domain ) ?> FreelancePHP.net</a></li>
-						<li><a href="http://wordpress.org/extend/plugins/wp-external-links/" target="_blank"><?php _e( 'Plugin on ', $this->domain ) ?> WordPress.org</a></li>
-						<li><a href="http://www.freelancephp.net/contact/" target="_blank"><?php _e( 'Contact the author', $this->domain ) ?></a></li>
+						<li><a href="http://www.freelancephp.net/contact/" target="_blank"><?php _e( 'Questions or suggestions?', $this->domain ) ?></a></li>
+						<li><?php _e( 'If you like this plugin please send your rating at WordPress.org.' ) ?></li>
+						<li><a href="http://wordpress.org/extend/plugins/wp-external-links/" target="_blank">WordPress.org</a> | <a href="http://www.freelancephp.net/wp-external-links-plugin/" target="_blank">FreelancePHP.net</a></li>
 					</ul>
 				</div>
 			</div>
@@ -450,8 +443,11 @@ jQuery(function( $ ){
 				<div class="handlediv" title="<?php _e( 'Click to toggle' ) ?>"><br/></div>
 				<h3 class="hndle"><?php _e( 'Other Plugins', $this->domain ) ?></h3>
 				<div class="inside">
+					<h4><img src="<?php echo plugins_url( 'images/icon-wp-mailto-links.png', __FILE__ ) ?>" width="16" height="16" /> WP Mailto Links</h4>
+					<p><?php _e( 'Manage mailto links on your site and protect emails from spambots, set mail icon and more.', $this->domain ) ?></p>
 					<ul>
-						<li><a href="http://www.freelancephp.net/email-encoder-php-class-wp-plugin/" target="_blank">WP Email Encoder Bundle</a></li>
+						<li><a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/plugin-install.php?tab=search&type=term&s=WP+Mailto+Links+freelancephp&plugin-search-input=Search+Plugins" target="_blank"><?php _e( 'Get this plugin now' ) ?></a></li>
+						<li><a href="http://wordpress.org/extend/plugins/wp-mailto-links/" target="_blank">WordPress.org</a> | <a href="http://www.freelancephp.net/wp-mailto-links-plugin/" target="_blank">FreelancePHP.net</a></li>
 					</ul>
 				</div>
 			</div>
@@ -481,7 +477,8 @@ jQuery(function( $ ){
 		// set all options
 		if ( ! empty( $saved_options ) ) {
 			foreach ( $this->options AS $key => $option ) {
-				if ( ! isset( $saved_options[ $key ] ) AND in_array( $key, array( 'target', 'use_js', 'icon' ) ) )
+				// skip when no saved value for radio 'target'
+				if ( ! isset( $saved_options[ $key ] ) AND $key == 'target' )
 					continue;
 
 				$this->options[ $key ] = $saved_options[ $key ];
