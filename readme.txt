@@ -45,14 +45,19 @@ In the last case when using the JavaScript method and jQuery the link would stil
 
 == Screenshots ==
 
-1. Admin Settings Page
 1. Link Icon on the Site
+1. Admin Settings Page
+
+== Other notes ==
+
+= Credits =
+* Title icon on Admin Options Page was made by [FatCow Web Hosting](http://www.fatcow.com/) taken form [iconfinder](http://findicons.com/icon/164579/link_go?id=427009)
 
 == Changelog ==
 
 = 0.32 =
 * For jQuery uses live() function so also opens dynamicly created links in given target
-* Fixed bug of changing <abbr> tag
+* Fixed bug of changing `<abbr>` tag
 * Small cosmetical adjustments
 
 = 0.31 =
@@ -90,10 +95,5 @@ In the last case when using the JavaScript method and jQuery the link would stil
 
 = 0.32 =
 * For jQuery uses live() function so also opens dynamicly created links in given target
-* Fixed bug of changing <abbr> tag
+* Fixed bug of changing `<abbr>` tag
 * Small cosmetical adjustments
-
-== Other notes ==
-
-= Credits =
-* Title icon on Admin Options Page was made by [FatCow Web Hosting](http://www.fatcow.com/) taken form [iconfinder](http://findicons.com/icon/164579/link_go?id=427009)
