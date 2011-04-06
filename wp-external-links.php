@@ -4,7 +4,7 @@ Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/wp-external-links-plugin
 Description: Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 Author: Victor Villaverde Laan
-Version: 0.31
+Version: 0.32
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -19,7 +19,7 @@ class WP_External_Links {
 	 * Current version
 	 * @var string
 	 */
-	var $version = '0.31';
+	var $version = '0.32';
 
 	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
@@ -69,50 +69,14 @@ class WP_External_Links {
 		// load text domain for translations
 		load_plugin_textdomain( $this->domain, dirname( __FILE__ ) . '/lang/', basename( dirname(__FILE__) ) . '/lang/' );
 
-		// add actions
-		add_action( 'init', array( $this, 'init' ) );
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
-		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-
-		// add filters
-		if ( $this->options[ 'filter_whole_page' ] ) {
-			add_action( 'wp', array( $this, 'wp' ), 1 );
-		} else {
-			// set filter priority
-			$priority = 1000000000;
-
-			// content
-			if ( $this->options[ 'filter_posts' ] ) {
-				add_filter( 'the_title', array( $this, 'filter_content' ), $priority );
-				add_filter( 'the_content', array( $this, 'filter_content' ), $priority );
-				add_filter( 'the_excerpt', array( $this, 'filter_content' ), $priority );
-				add_filter( 'get_the_excerpt', array( $this, 'filter_content' ), $priority );
-			}
-
-			// comments
-			if ( $this->options[ 'filter_comments' ] ) {
-				add_filter( 'comment_text', array( $this, 'filter_content' ), $priority );
-				add_filter( 'comment_excerpt', array( $this, 'filter_content' ), $priority );
-				add_filter( 'comment_url', array( $this, 'filter_content' ), $priority );
-				add_filter( 'get_comment_author_url', array( $this, 'filter_content' ), $priority );
-				add_filter( 'get_comment_author_link', array( $this, 'filter_content' ), $priority );
-				add_filter( 'get_comment_author_url_link', array( $this, 'filter_content' ), $priority );
-			}
-
-			// widgets ( only text widgets )
-			if ( $this->options[ 'filter_widgets' ] ) {
-				add_filter( 'widget_title', array( $this, 'filter_content' ), $priority );
-				add_filter( 'widget_text', array( $this, 'filter_content' ), $priority );
-
-				// Only if Widget Logic plugin is installed
-				// @todo Doesn't work and cannot find another way to filter all widget contents
-				//add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
-			}
-		}
-
 		// set uninstall hook
 		if ( function_exists( 'register_deactivation_hook' ) )
 			register_deactivation_hook( __FILE__, array( $this, 'deactivation' ));
+
+		// add actions
+		add_action( 'wp', array( $this, 'wp' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 	}
 
 	/**
@@ -120,7 +84,51 @@ class WP_External_Links {
 	 */
 	function wp() {
 		if ( ! is_admin() && ! is_feed() ) {
-			ob_start( array( $this, 'filter_content' ) );
+			// add wp_head for setting js vars and css style
+			add_action( 'wp_head', array( $this, 'wp_head' ) );
+
+			// add stylesheet
+			wp_enqueue_style( 'wp-external-links', plugins_url( 'css/external-links.css', __FILE__ ), FALSE, $this->version );
+
+			// set js file
+			if ( $this->options[ 'use_js' ] ) {
+				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/external-links.js', __FILE__ ), array( 'jquery' ), $this->version );
+			}
+
+			if ( $this->options[ 'filter_whole_page' ] ) {
+				ob_start( array( $this, 'filter_page' ) );
+			} else {
+				// set filter priority
+				$priority = 1000000000;
+
+				// content
+				if ( $this->options[ 'filter_posts' ] ) {
+					add_filter( 'the_title', array( $this, 'filter_content' ), $priority );
+					add_filter( 'the_content', array( $this, 'filter_content' ), $priority );
+					add_filter( 'the_excerpt', array( $this, 'filter_content' ), $priority );
+					add_filter( 'get_the_excerpt', array( $this, 'filter_content' ), $priority );
+				}
+
+				// comments
+				if ( $this->options[ 'filter_comments' ] ) {
+					add_filter( 'comment_text', array( $this, 'filter_content' ), $priority );
+					add_filter( 'comment_excerpt', array( $this, 'filter_content' ), $priority );
+					add_filter( 'comment_url', array( $this, 'filter_content' ), $priority );
+					add_filter( 'get_comment_author_url', array( $this, 'filter_content' ), $priority );
+					add_filter( 'get_comment_author_link', array( $this, 'filter_content' ), $priority );
+					add_filter( 'get_comment_author_url_link', array( $this, 'filter_content' ), $priority );
+				}
+
+				// widgets ( only text widgets )
+				if ( $this->options[ 'filter_widgets' ] ) {
+					add_filter( 'widget_title', array( $this, 'filter_content' ), $priority );
+					add_filter( 'widget_text', array( $this, 'filter_content' ), $priority );
+
+					// Only if Widget Logic plugin is installed
+					// @todo Doesn't work and cannot find another way to filter all widget contents
+					//add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
+				}
+			}
 		}
 	}
 
@@ -132,24 +140,6 @@ class WP_External_Links {
 			// add options page
 			$page = add_options_page( __( 'External Links', $this->domain ), __( 'External Links', $this->domain ),
 								'manage_options', __FILE__, array( $this, 'options_page' ) );
-		}
-	}
-
-	/**
-	 * Callback init
-	 */
-	function init() {
-		if ( ! is_admin() ) {
-			// add wp_head for setting js vars and css style
-			add_action( 'wp_head', array( $this, 'wp_head' ) );
-
-			// add stylesheet
-			wp_enqueue_style( 'wp-external-links', plugins_url( 'css/external-links.css', __FILE__ ), FALSE, $this->version );
-
-			// set js file
-			if ( $this->options[ 'use_js' ] ) {
-				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/external-links.js', __FILE__ ), array( 'jquery' ), $this->version );
-			}
 		}
 	}
 
@@ -171,24 +161,40 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	}
 
 	/**
+	 * Filter complete html page
+	 * @param array $match
+	 * @return string
+	 */
+	function filter_page( $content ) {
+		$body_pattern = '/<body(.*?)>(.*?)<\/body[\s+]*>/is';
+
+		// only replace links in <body> part
+		return preg_replace_callback( $body_pattern, array( $this, '_callback_page_filter' ), $content );
+	}
+
+	function _callback_page_filter( $match ) {
+		return $this->filter_content( $match[ 0 ] );
+	}
+
+	/**
 	 * Filter content
 	 * @param string $content
 	 * @return string
 	 */
 	function filter_content( $content ) {
-		// get <a> elements
-		$a_pattern = '/<[aA](.*?)>(.*?)<\/[aA][\s+]*>/i';
+		$a_pattern = '/<a[^A-Za-z](.*?)>(.*?)<\/a[\s+]*>/is';
+
+		// replace links in body
 		$content = preg_replace_callback( $a_pattern, array( $this, 'parse_link' ), $content );
 
 		// remove style when no icon classes are found
 		if ( strpos( $content, 'ext-icon-' ) === FALSE ) {
 			// remove style with id wp-external-links-css
-			$content = preg_replace( '/<link(.*?)wp-external-links-css(.*?)\/>[\s+]*/i','' ,$content );
+			$content = preg_replace( '/<link(.*?)wp-external-links-css(.*?)\/>[\s+]*/i', '', $content );
 		}
 
 		return $content;
 	}
-
 
 
 	/**
@@ -197,7 +203,9 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 * @return string Clean <a> code
 	 */
 	function parse_link( $match ) {
-		$attrs = shortcode_parse_atts( $match[ 1 ] );
+		$attrs = $match[ 1 ];
+		$attrs = stripslashes( $attrs );
+		$attrs = shortcode_parse_atts( $attrs );
 
 		$href_tolower = strtolower( $attrs[ 'href' ] );
 		$rel_tolower = ( isset( $attrs[ 'rel' ] ) ) ? strtolower( $attrs[ 'rel' ] ) : '';
@@ -297,6 +305,17 @@ jQuery(function( $ ){
 			}
 		})
 		.change();
+
+	// slide postbox
+	$( '.postbox' ).find( '.handlediv, .hndle' ).click(function(){
+		var $inside = $( this ).parent().find( '.inside' );
+
+		if ( $inside.css( 'display' ) == 'block' ) {
+			$inside.css({ display:'block' }).slideUp();
+		} else {
+			$inside.css({ display:'none' }).slideDown();
+		}
+	});
 })
 </script>
 	<div class="wrap">
@@ -446,8 +465,27 @@ jQuery(function( $ ){
 					<h4><img src="<?php echo plugins_url( 'images/icon-wp-mailto-links.png', __FILE__ ) ?>" width="16" height="16" /> WP Mailto Links</h4>
 					<p><?php _e( 'Manage mailto links on your site and protect emails from spambots, set mail icon and more.', $this->domain ) ?></p>
 					<ul>
-						<li><a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/plugin-install.php?tab=search&type=term&s=WP+Mailto+Links+freelancephp&plugin-search-input=Search+Plugins" target="_blank"><?php _e( 'Get this plugin now' ) ?></a></li>
+						<?php if ( is_plugin_active( 'wp-mailto-links/wp-mailto-links.php' ) ): ?>
+							<li><?php _e( 'This plugin is already activated.', $this->domain ) ?> <a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/options-general.php?page=wp-mailto-links/wp-mailto-links.php"><?php _e( 'Settings' ) ?></a></li>
+						<?php elseif( file_exists( WP_PLUGIN_DIR . '/wp-mailto-links/wp-mailto-links.php' ) ): ?>
+							<li><a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/plugins.php?plugin_status=inactive"><?php _e( 'Activate this plugin.', $this->domain ) ?></a></li>
+						<?php else: ?>
+							<li><a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/plugin-install.php?tab=search&type=term&s=WP+Mailto+Links+freelancephp&plugin-search-input=Search+Plugins"><?php _e( 'Get this plugin now', $this->domain ) ?></a></li>
+						<?php endif; ?>
 						<li><a href="http://wordpress.org/extend/plugins/wp-mailto-links/" target="_blank">WordPress.org</a> | <a href="http://www.freelancephp.net/wp-mailto-links-plugin/" target="_blank">FreelancePHP.net</a></li>
+					</ul>
+
+					<h4><img src="<?php echo plugins_url( 'images/icon-email-encoder-bundle.png', __FILE__ ) ?>" width="16" height="16" /> Email Encoder Bundle</h4>
+					<p><?php _e( 'Protect email addresses on your site from spambots and being used for spamming by using one of the encoding methods.', $this->domain ) ?></p>
+					<ul>
+						<?php if ( is_plugin_active( 'email-encoder-bundle/email-encoder-bundle.php' ) ): ?>
+							<li><?php _e( 'This plugin is already activated.', $this->domain ) ?> <a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/options-general.php?page=email-encoder-bundle/email-encoder-bundle.php"><?php _e( 'Settings' ) ?></a></li>
+						<?php elseif( file_exists( WP_PLUGIN_DIR . '/email-encoder-bundle/email-encoder-bundle.php' ) ): ?>
+							<li><a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/plugins.php?plugin_status=inactive"><?php _e( 'Activate this plugin.', $this->domain ) ?></a></li>
+						<?php else: ?>
+							<li><a href="<?php echo get_bloginfo( 'url' ) ?>/wp-admin/plugin-install.php?tab=search&type=term&s=Email+Encoder+Bundle+freelancephp&plugin-search-input=Search+Plugins"><?php _e( 'Get this plugin now', $this->domain ) ?></a></li>
+						<?php endif; ?>
+						<li><a href="http://wordpress.org/extend/plugins/email-encoder-bundle/" target="_blank">WordPress.org</a> | <a href="http://www.freelancephp.net/email-encoder-php-class-wp-plugin/" target="_blank">FreelancePHP.net</a></li>
 					</ul>
 				</div>
 			</div>

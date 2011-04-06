@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.31
+Stable tag: 0.32
 
 Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 
@@ -29,6 +29,18 @@ Supports PHP4.3+ and up to latest WP version.
 
 == Frequently Asked Questions ==
 
+= I have a problem when defining links with JavaScript. What to do?  =
+When having problems defining links in JavaScript like:
+`document.write( "<a href=\"http:://google.com\">Google</a>" );`
+
+You could use single quotes for defining the string and therefore remove the double quotes, like:
+`document.write( '<a href="http:://google.com">Google</a>' );`
+
+Or you could prevent the plugin filtering the link by escaping the last slash (`</a>`) like:
+`document.write( '<a href="http:://google.com">Google<\/a>' );`
+
+In the last case when using the JavaScript method and jQuery the link would still be opened in the target given on the options page.
+
 [Do you have a question? Please ask me](http://www.freelancephp.net/contact/)
 
 == Screenshots ==
@@ -37,6 +49,11 @@ Supports PHP4.3+ and up to latest WP version.
 1. Link Icon on the Site
 
 == Changelog ==
+
+= 0.32 =
+* For jQuery uses live() function so also opens dynamicly created links in given target
+* Fixed bug of changing <abbr> tag
+* Small cosmetical adjustments
 
 = 0.31 =
 * Small cosmetical adjustments
@@ -71,6 +88,10 @@ Supports PHP4.3+ and up to latest WP version.
 
 == Upgrade Notice ==
 
+= 0.32 =
+* For jQuery uses live() function so also opens dynamicly created links in given target
+* Fixed bug of changing <abbr> tag
+* Small cosmetical adjustments
 
 == Other notes ==
 
