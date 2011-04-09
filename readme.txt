@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.0
-Stable tag: 0.32
+Stable tag: 0.33
 
 Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 
@@ -39,6 +39,8 @@ You could use single quotes for defining the string and therefore remove the dou
 Or you could prevent the plugin filtering the link by escaping the last slash (`</a>`) like:
 `document.write( '<a href="http:://google.com">Google<\/a>' );`
 
+This can be done automatically when enabling the option "Auto-fix javascript problem".
+
 In the last case when using the JavaScript method and jQuery the link would still be opened in the target given on the options page.
 
 [Do you have a question? Please ask me](http://www.freelancephp.net/contact/)
@@ -54,6 +56,10 @@ In the last case when using the JavaScript method and jQuery the link would stil
 * Title icon on Admin Options Page was made by [FatCow Web Hosting](http://www.fatcow.com/) taken form [iconfinder](http://findicons.com/icon/164579/link_go?id=427009)
 
 == Changelog ==
+
+= 0.33 =
+* Add option to fix js problem
+* Fixed PHP / WP notices
 
 = 0.32 =
 * For jQuery uses live() function so also opens dynamicly created links in given target
@@ -92,6 +98,10 @@ In the last case when using the JavaScript method and jQuery the link would stil
 * Internalization implemented (no language files yet)
 
 == Upgrade Notice ==
+
+= 0.33 =
+* Add option to fix js problem
+* Fixed PHP / WP notices
 
 = 0.32 =
 * For jQuery uses live() function so also opens dynamicly created links in given target
