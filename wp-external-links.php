@@ -4,7 +4,7 @@ Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/wp-external-links-plugin
 Description: Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 Author: Victor Villaverde Laan
-Version: 0.33
+Version: 0.34
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -19,7 +19,7 @@ class WP_External_Links {
 	 * Current version
 	 * @var string
 	 */
-	var $version = '0.33';
+	var $version = '0.34';
 
 	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
@@ -46,11 +46,13 @@ class WP_External_Links {
 		'filter_posts' => 1,
 		'filter_comments' => 1,
 		'filter_widgets' => 1,
-		'fix_js' => 1,
+		'fix_js' => 0,
+		'fix_xhtml' => 0,
 		'icon' => 0,
 		'no_icon_class' => 'no-ext-icon',
 		'no_icon_same_window' => 0,
 		'class_name' => 'ext-link',
+		'widget_content_filter' => 0,
 	);
 
 	/**
@@ -80,7 +82,7 @@ class WP_External_Links {
 		$this->_set_options();
 
 		// load text domain for translations
-		load_plugin_textdomain( $this->domain, dirname( __FILE__ ) . '/lang/', basename( dirname(__FILE__) ) . '/lang/' );
+		load_plugin_textdomain( $this->domain, FALSE, dirname( plugin_basename( __FILE__ ) ) . '/lang/' );
 
 		// set uninstall hook
 		if ( function_exists( 'register_deactivation_hook' ) )
@@ -137,9 +139,8 @@ class WP_External_Links {
 					add_filter( 'widget_title', array( $this, 'filter_content' ), $priority );
 					add_filter( 'widget_text', array( $this, 'filter_content' ), $priority );
 
-					// Only if Widget Logic plugin is installed
-					// @todo Doesn't work and cannot find another way to filter all widget contents
-					//add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
+					// Only if Widget Logic plugin is installed and 'widget_content' option is activated
+					add_filter( 'widget_content', array( $this, 'filter_content' ), $priority );
 				}
 			}
 		}
@@ -165,7 +166,7 @@ class WP_External_Links {
 							? $this->options[ 'no_icon_class' ]
 							: '';
 ?>
-<script language="javascript">/* <![CDATA[ */
+<script type="text/javascript">/* <![CDATA[ */
 /* WP External Links Plugin */
 var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php echo $this->options[ 'target' ] ?>',excludeClass: '<?php echo $excludeClass ?>' };
 /* ]]> */</script>
@@ -266,8 +267,10 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 			// set target
 			if ( $this->options[ 'target' ] != '_none' AND ! $this->options[ 'use_js' ] AND ( ! $this->options[ 'no_icon_same_window' ] OR empty( $this->options[ 'no_icon_class' ] ) OR strpos( $attrs[ 'class' ], $this->options[ 'no_icon_class' ] ) === FALSE ) )
 				$attrs[ 'target' ] = $this->options[ 'target' ];
-		}
 
+		} elseif ( $this->options[ 'fix_xhtml' ] ) {
+			return $match[ 0 ];
+		}
 
 		// create element code
 		$link = '<a ';
@@ -300,7 +303,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 */
 	function options_page() {
 ?>
-<script language="javascript">
+<script type="text/javascript">
 jQuery(function( $ ){
 	// remove message
 	$( '.settings-error' )
@@ -333,7 +336,12 @@ jQuery(function( $ ){
 			$inside.css({ display:'none' }).slideDown();
 		}
 	});
-})
+
+	// note
+	$( '#fix_xhtml' ).change(function(){
+		$( '#xhtml_convert_all' ).css( 'display', $( this ).attr( 'checked' ) ? 'none' : 'block' );
+	}).change();
+});
 </script>
 	<div class="wrap">
 		<div class="icon32" id="icon-options-custom" style="background:url( <?php echo plugins_url( 'images/icon-wp-external-links.png', __FILE__ ) ?> ) no-repeat 50% 50%"><br></div>
@@ -392,15 +400,17 @@ jQuery(function( $ ){
 								<br/>&nbsp;&nbsp;<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_comments]" id="filter_comments" value="1" <?php checked( '1', (int) $options['filter_comments'] ); ?> />
 										<span><?php _e( 'Comments', $this->domain ) ?></span></label>
 								<br/>&nbsp;&nbsp;<label><input type="checkbox" name="<?php echo $this->options_name ?>[filter_widgets]" id="filter_widgets" value="1" <?php checked( '1', (int) $options['filter_widgets'] ); ?> />
-										<span><?php _e( 'Text widgets', $this->domain ) ?></span></label>
-								<br/>
-								<br/><span class="description"><?php _e( 'Note: all <code>&lt;a&gt;</code> tags in the selected contents will be converted to XHTML valid code' ) ?></span>
+										<span><?php if ( $this->options[ 'widget_logic_filter' ] ) { _e( 'All widgets (uses the <code>widget_content</code> filter of the Widget Logic plugin)', $this->domain ); } else { _e( 'All text widgets', $this->domain ); } ?></span></label>
 							</td>
 						</tr>
 						<tr>
 							<th><?php _e( 'Solve problems...', $this->domain ) ?></th>
 							<td><label><input type="checkbox" name="<?php echo $this->options_name ?>[fix_js]" id="fix_js" value="1" <?php checked( '1', (int) $options['fix_js'] ); ?> />
 								<span><?php _e( 'Auto-fix javascript problem (by replacing <code>&lt;/a&gt;</code> with <code>&lt;\/a&gt;</code> in js)', $this->domain ) ?></span></label>
+								<br/><label><input type="checkbox" name="<?php echo $this->options_name ?>[fix_xhtml]" id="fix_xhtml" value="1" <?php checked( '1', (int) $options['fix_xhtml'] ); ?> />
+								<span><?php _e( 'Only convert <strong>external</strong> links of the selected content to valid XHTML code (instead of all &lt;a&gt;-tags)', $this->domain ) ?></span></label>
+								<br/>
+								<br/><span id="xhtml_convert_all" class="description"><?php _e( 'Note: all <code>&lt;a&gt;</code> tags in the selected contents will be converted to XHTML valid code' ) ?></span>
 							</td>
 						</tr>
 						</table>
@@ -544,6 +554,12 @@ jQuery(function( $ ){
 
 				$this->options[ $key ] = ( empty( $saved_options[ $key ] ) ) ? '' : $saved_options[ $key ];
 			}
+		}
+
+		// set widget_content filter of Widget Logic plugin
+		$widget_logic_opts = get_option( 'widget_logic' );
+		if ( key_exists( 'widget_logic-options-filter', $widget_logic_opts ) ) {
+			$this->options[ 'widget_logic_filter' ] = ( $widget_logic_opts[ 'widget_logic-options-filter' ] == 'checked' ) ? 1 : 0;
 		}
 	}
 

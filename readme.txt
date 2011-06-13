@@ -2,8 +2,8 @@
 Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
-Tested up to: 3.1.0
-Stable tag: 0.33
+Tested up to: 3.1.3
+Stable tag: 0.34
 
 Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 
@@ -52,13 +52,20 @@ In the last case when using the JavaScript method and jQuery the link would stil
 
 == Other notes ==
 
+= TODO =
+* Add a way to exclude links from being filtered
+
 = Credits =
 * Title icon on Admin Options Page was made by [FatCow Web Hosting](http://www.fatcow.com/) taken form [iconfinder](http://findicons.com/icon/164579/link_go?id=427009)
 
 == Changelog ==
 
+= 0.34 =
+* Added option only converting external `<a>` tags to XHTML valid code
+* Changed script attribute `language` to `type`
+
 = 0.33 =
-* Add option to fix js problem
+* Added option to fix js problem
 * Fixed PHP / WP notices
 
 = 0.32 =
@@ -98,6 +105,9 @@ In the last case when using the JavaScript method and jQuery the link would stil
 * Internalization implemented (no language files yet)
 
 == Upgrade Notice ==
+
+= 0.34 =
+* Solved some issues
 
 = 0.33 =
 * Add option to fix js problem
