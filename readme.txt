@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
 Requires at least: 2.7.0
 Tested up to: 3.1.3
-Stable tag: 0.34
+Stable tag: 0.35
 
 Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 
@@ -60,9 +60,13 @@ In the last case when using the JavaScript method and jQuery the link would stil
 
 == Changelog ==
 
+= 0.35 =
+* Widget Logic options bug
+
 = 0.34 =
 * Added option only converting external `<a>` tags to XHTML valid code
 * Changed script attribute `language` to `type`
+* Added support for widget_content filter of the Logic Widget plugin
 
 = 0.33 =
 * Added option to fix js problem

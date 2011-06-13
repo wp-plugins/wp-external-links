@@ -4,7 +4,7 @@ Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/wp-external-links-plugin
 Description: Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
 Author: Victor Villaverde Laan
-Version: 0.34
+Version: 0.35
 Author URI: http://www.freelancephp.net
 License: Dual licensed under the MIT and GPL licenses
 */
@@ -558,7 +558,7 @@ jQuery(function( $ ){
 
 		// set widget_content filter of Widget Logic plugin
 		$widget_logic_opts = get_option( 'widget_logic' );
-		if ( key_exists( 'widget_logic-options-filter', $widget_logic_opts ) ) {
+		if ( is_array( $widget_logic_opts ) AND key_exists( 'widget_logic-options-filter', $widget_logic_opts ) ) {
 			$this->options[ 'widget_logic_filter' ] = ( $widget_logic_opts[ 'widget_logic-options-filter' ] == 'checked' ) ? 1 : 0;
 		}
 	}
