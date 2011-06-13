@@ -52,7 +52,7 @@ class WP_External_Links {
 		'no_icon_class' => 'no-ext-icon',
 		'no_icon_same_window' => 0,
 		'class_name' => 'ext-link',
-		'widget_content_filter' => 0,
+		'widget_logic_filter' => 0,
 	);
 
 	/**
