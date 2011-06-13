@@ -19,7 +19,7 @@ class WP_External_Links {
 	 * Current version
 	 * @var string
 	 */
-	var $version = '0.34';
+	var $version = '0.35';
 
 	/**
 	 * Used as prefix for options entry and could be used as text domain (for translations)
