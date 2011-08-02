@@ -71,7 +71,12 @@ final class Admin_External_Links {
 		load_plugin_textdomain( WP_EXTERNAL_LINKS_KEY, FALSE, dirname( plugin_basename( WP_EXTERNAL_LINKS_FILE ) ) . '/lang/' );
 
 		// set activation hook
-		register_activation_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_activation' ) );
+		// Does not work properly
+		//register_activation_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_activation' ) );
+		// workaround: call activation, when new format not found
+		$options = get_option( 'wp_external_links-general' );
+		if ( empty( $options ) )
+			$this->call_activation();
 
 		// set deactivation hook
 		register_deactivation_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_deactivation' ) );
@@ -262,7 +267,7 @@ final class Admin_External_Links {
 						<?php echo $this->tooltip_help( 'The "target"-attribute is not valid XHTML strict code. Enable this option to remove the target from external links and use the JavaScript method (built-in this plugin) for opening links.' ) ?></th>
 				<td>
 					<label><?php echo $this->form->checkbox( 'use_js', 1, array( 'class' => 'field_use_js' ) ); ?>
-					<span><?php $this->_e( 'Use JavaScript for opening links in given target, instead of setting <code>target</code>-attribute <em>(recommended)</em>' ) ?></span></label>
+					<span><?php $this->_e( 'Use JavaScript for opening links in given target.' ) ?></span></label>
 				</td>
 			</tr>
 			</table>
