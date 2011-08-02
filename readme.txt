@@ -1,23 +1,24 @@
 === WP External Links ===
 Contributors: freelancephp
-Tags: links, external, new window, icon, target, _blank, _new, _top, _none, rel, nofollow, javascript, xhtml strict
+Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.0.0
 Tested up to: 3.2.1
 Stable tag: 1.00
 
-Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
+Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
 
 == Description ==
 
-Manage the external links on your site.
+Set options for external links, like:
 
 = Features =
-* Open external links in a new window/tab
-* Set link title
-* Set link icon
+* Set target for opening external links
 * Add "external" / "nofollow" to rel-attribute
-* Set link class
+* Set title
+* Set icon
+* Add class(es)
 * Set no-icon class
+* XHTML strict and SEO friendly
 
 This latest version requires PHP 5.2+ and WP 3.0+.
 
