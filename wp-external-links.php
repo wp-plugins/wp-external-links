@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP External Links
 Plugin URI: http://www.freelancephp.net/wp-external-links-plugin
-Description: Manage external links on your site: open in new window/tab, set link icon, add "external", add "nofollow" and more.
+Description: Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
 Author: Victor Villaverde Laan
 Version: 1.00
 Author URI: http://www.freelancephp.net
