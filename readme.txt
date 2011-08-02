@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.0.0
 Tested up to: 3.2.1
-Stable tag: 1.01
+Stable tag: 0.35
 
 Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
 
