@@ -1,16 +1,20 @@
 /* WP External Links Plugin */
-(function( w, $ ){
+(function(){
 
-	var addEvt = function ( el, evt, fn ) {
-			if ( el.attachEvent ) {
-				// IE method
-				el.attachEvent( 'on'+ evt, fn );
-			} else if ( el.addEventListener ) {
-				// Standard JS method
-				el.addEventListener( evt, fn, false );
-			}
-		};
+	var $ = typeof jQuery == 'undefined' ? null : jQuery;
 
+	// add event handler
+	function addEvt ( el, evt, fn ) {
+		if ( el.attachEvent ) {
+			// IE method
+			el.attachEvent( 'on'+ evt, fn );
+		} else if ( el.addEventListener ) {
+			// Standard JS method
+			el.addEventListener( evt, fn, false );
+		}
+	};
+
+	// open external link
 	function openExtLink( a, opts, e ) {
 		var options = opts ? opts : wpExtLinks,
 			href = a.href ? a.href.toLowerCase() : '',
@@ -23,19 +27,20 @@
 									( href.substr( 0, 7 ) == 'http://'
 										|| href.substr( 0, 8 ) == 'https://'
 										|| href.substr( 0, 6 ) == 'ftp://'  ) ) ) ) {
-
 			// open link in a new window
-			n = w.open( a.href, options.target );
+			n = window.open( a.href, options.target );
 			n.focus();
 
 			// prevent default event action
 			if ( e ) {
-				e.returnValue = false;
-				if ( e.preventDefault )
+				if ( e.preventDefault ) {
 					e.preventDefault();
+				} else {
+					e.returnValue = false;
+				}
 			}
 		}
-	}
+	};
 
 	if ( $ ) {
 		// jQuery DOMready method
@@ -46,8 +51,8 @@
 		});
 	} else {
 		// use onload when jQuery not available
-		addEvt( w, 'load', function () {
-			var links = w.document.getElementsByTagName( 'a' ),
+		addEvt( window, 'load', function () {
+			var links = window.document.getElementsByTagName( 'a' ),
 				a;
 
 			// check each <a> element
@@ -64,4 +69,4 @@
 		});
 	}
 
-})( window, typeof jQuery == 'undefined' ? null : jQuery );
+})();
