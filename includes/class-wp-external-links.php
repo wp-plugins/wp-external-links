@@ -47,11 +47,11 @@ final class WP_External_Links {
 			add_action( 'wp_head', array( $this, 'call_wp_head' ) );
 
 			// add stylesheet
-			wp_enqueue_style( 'wp-external-links', plugins_url( 'css/external-links.css', __FILE__ ), FALSE, WP_EXTERNAL_LINKS_VERSION );
+			wp_enqueue_style( 'wp-external-links', plugins_url( 'css/external-links.css', WP_EXTERNAL_LINKS_FILE ), FALSE, WP_EXTERNAL_LINKS_VERSION );
 
 			// set js file
 			if ( $this->get_opt( 'use_js' ) )
-				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/external-links.js', __FILE__ ), array( 'jquery' ), WP_EXTERNAL_LINKS_VERSION );
+				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'jquery' ), WP_EXTERNAL_LINKS_VERSION );
 
 			// filters
 			if ( $this->get_opt( 'filter_page' ) ) {
