@@ -447,7 +447,6 @@ final class Admin_External_Links {
 
 			// delete old format option values
 			delete_option( 'WP_External_Links_options' );
-			unregister_setting( 'WP_External_Links', 'WP_External_Links_options' );
 		}
 	}
 

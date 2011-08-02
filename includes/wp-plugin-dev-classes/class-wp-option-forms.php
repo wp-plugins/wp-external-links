@@ -314,7 +314,6 @@ class WP_Option_Forms_01 {
 	public function delete_options() {
 		foreach ( $this->options AS $option_name => $values ) {
 			delete_option( $option_name );
-			unregister_setting( $option_name, $option_name );
 		}
 	}
 
