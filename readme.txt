@@ -46,6 +46,9 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 
 == Changelog ==
 
+= 1.02 =
+* Solved the not working activation hook
+
 = 1.01 =
 * Solved bug after live testing
 
