@@ -41,7 +41,7 @@ final class WP_External_Links {
 	public function call_wp() {
 		if ( ! is_admin() && ! is_feed() ) {
 			// Include phpQuery
-			require_once( 'includes/phpQuery/phpQuery.php' );
+			require_once( 'phpQuery/phpQuery.php' );
 
 			// add wp_head for setting js vars and css style
 			add_action( 'wp_head', array( $this, 'call_wp_head' ) );
