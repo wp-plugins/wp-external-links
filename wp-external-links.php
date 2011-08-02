@@ -10,7 +10,7 @@ License: Dual licensed under the MIT and GPL licenses
 */
 
 // plugin version
-define( 'WP_EXTERNAL_LINKS_VERSION', '1.00' );
+define( 'WP_EXTERNAL_LINKS_VERSION', '1.01' );
 
 // plugin key (used as translation domain, option_group, page_slug etc)
 define( 'WP_EXTERNAL_LINKS_KEY', 'wp_external_links' );
