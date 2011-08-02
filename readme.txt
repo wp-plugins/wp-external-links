@@ -114,7 +114,7 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 
 == Upgrade Notice ==
 
-= 1.01 =
+= 1.02 =
 * This version requires PHP5.2+ and WP3.0+
 * Added option for setting title-attribute
 * Added option for excluding certain links
