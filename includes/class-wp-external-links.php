@@ -127,8 +127,33 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 * @return string
 	 */
 	public function call_filter_content( $content ) {
+		// Workaround: remove <head>-attributes before using phpQuery
+		$regexp_head = '/<head(.*?)>/is';
+		$clean_head = '<head>';
+
+		// set simple <head> without attributes
+		preg_match( $regexp_head, $content, $matches );
+		$original_head = $matches[ 0 ];
+		$content = str_replace( $original_head, $clean_head, $content );
+
 		//phpQuery::$debug = true;
+
+		// set document
 		$doc = phpQuery::newDocument( $content );
+
+		// @todo
+		/*
+		$regexp_xml = '/<\?xml(.*?)\?>/is';
+		$regexp_xhtml = '/<!DOCTYPE(.*?)xhtml(.*?)>/is';
+
+		if ( preg_match( $regexp_xml, $content ) > 0 ) {
+			$doc = phpQuery::newDocumentXML( $content, get_bloginfo( 'charset' ) );
+		} elseif ( preg_match( $regexp_xhtml, $content ) > 0 ) {
+			$doc = phpQuery::newDocumentXHTML( $content, get_bloginfo( 'charset' ) );
+		} else {
+			$doc = phpQuery::newDocumentHTML( $content, get_bloginfo( 'charset' ) );
+		}
+		*/
 
 		// remove style when no icon classes are found
 		if ( strpos( $content, 'ext-icon-' ) === FALSE ) {
@@ -166,7 +191,13 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 			$excludes->find( 'a' )->removeAttr( 'excluded' );
 		}
 
-		return $doc;
+		// get document content
+		$content = (string) $doc;
+
+		// recover original <head> with attributes
+		$content = str_replace( $clean_head, $original_head, $content );
+
+		return $content;
 	}
 
 	/**

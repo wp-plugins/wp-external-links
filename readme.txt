@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.0.0
 Tested up to: 3.2.1
-Stable tag: 1.02
+Stable tag: 1.03
 
 Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
 
@@ -45,6 +45,9 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.03 =
+* Workaround for echo DOCTYPE bug (caused by attributes in the head-tag)
 
 = 1.02 =
 * Solved the not working activation hook
@@ -114,8 +117,6 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 
 == Upgrade Notice ==
 
-= 1.02 =
+= 1.03 =
+* Workaround for echo DOCTYPE bug
 * This version requires PHP5.2+ and WP3.0+
-* Added option for setting title-attribute
-* Added option for excluding certain links
-* Improved Admin page
