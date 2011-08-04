@@ -41,7 +41,7 @@ final class WP_External_Links {
 	public function call_wp() {
 		if ( ! is_admin() && ! is_feed() ) {
 			// Include phpQuery
-			require_once( 'phpQuery/phpQuery.php' );
+			require_once( 'phpQuery.php' );
 
 			// add wp_head for setting js vars and css style
 			add_action( 'wp_head', array( $this, 'call_wp_head' ) );
@@ -127,6 +127,165 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 * @return string
 	 */
 	public function call_filter_content( $content ) {
+		if ( $this->get_opt( 'fix_js' ) ) {
+			// fix js problem by replacing </a> by <\/a>
+			$content = preg_replace_callback( '/<script([^>]*)>(.*?)<\/script[^>]*>/is', array( $this, 'call_fix_js' ), $content );
+		}
+
+		if ( $this->get_opt( 'phpquery' ) ) {
+			return $this->filter_phpquery( $content );
+		} else {
+			return $this->filter( $content );
+		}
+	}
+
+	/**
+	 * Fix </a> in JavaScript blocks (callback for regexp)
+	 * @param array $matches Result of a preg call in filter_content()
+	 * @return string Clean code
+	 */
+	public function call_fix_js( $matches ) {
+		return str_replace( '</a>', '<\/a>', $matches[ 0 ] );
+	}
+
+	/**
+	 * Check if link is external
+	 * @param string $href
+	 * @param string $rel
+	 * @return boolean
+	 */
+	private function is_external( $href, $rel ) {
+		return ( isset( $href ) AND ( strpos( $rel, 'external' ) !== FALSE
+												OR  ( strpos( $href, strtolower( get_bloginfo( 'url' ) ) ) === FALSE )
+														AND ( substr( $href, 0, 7 ) == 'http://'
+																OR substr( $href, 0, 8 ) == 'https://'
+																OR substr( $href, 0, 6 ) == 'ftp://' ) ) );
+	}
+
+	/**
+	 * Filter content
+	 * @param string $content
+	 * @return string
+	 */
+	private function filter( $content ) {
+		// replace links
+		$content = preg_replace_callback( '/<a([^>]*)>(.*?)<\/a[^>]*>/is', array( $this, 'call_parse_link' ), $content );
+
+		// remove style when no icon classes are found
+		if ( strpos( $content, 'ext-icon-' ) === FALSE ) {
+			// remove style with id wp-external-links-css
+			$content = preg_replace( '/<link(.*?)wp-external-links-css(.*?)\/>[\s+]*/i', '', $content );
+		}
+
+		return $content;
+	}
+
+	/**
+	 * Make a clean <a> code (callback for regexp)
+	 * @param array $matches Result of a preg call in filter_content()
+	 * @return string Clean <a> code
+	 */
+	public function call_parse_link( $matches ) {
+		$attrs = $matches[ 1 ];
+		$attrs = stripslashes( $attrs );
+		$attrs = shortcode_parse_atts( $attrs );
+
+		$href = strtolower( $attrs[ 'href' ] );
+		$rel = ( isset( $attrs[ 'rel' ] ) ) ? strtolower( $attrs[ 'rel' ] ) : '';
+
+		// check if it is an external link and not excluded
+		if ( ! $this->is_external( $href, $rel ) )
+			return $matches[ 0 ];
+
+		// set rel="external" (when not already set)
+		if ( $this->get_opt( 'external' ) )
+			$this->add_attr_value( &$attrs, 'rel', 'external' );
+
+		// set rel="nofollow" when doesn't have "follow" (or already "nofollow")
+		if ( $this->get_opt( 'nofollow' ) AND strpos( $rel, 'follow' ) === FALSE )
+			$this->add_attr_value( &$attrs, 'rel', 'nofollow' );
+
+		// set title
+		$title = $this->get_opt( 'title' );
+		$attrs[ 'title' ] = str_replace( '%title%', $attrs[ 'title' ], $title );
+
+		// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found
+		if ( $this->get_opt( 'icon', 'style' ) > 0 AND ( ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE  ){
+			$icon_class = 'ext-icon-'. $this->get_opt( 'icon', 'style' );
+			$this->add_attr_value( &$attrs, 'class', $icon_class );
+		}
+
+		// set user-defined class
+		if ( $this->get_opt( 'class_name', 'style' ) )
+			$this->add_attr_value( &$attrs, 'class', $this->options[ 'class_name' ] );
+
+		// set target
+		if ( ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window', 'style' ) OR ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) ) {
+			if ( $this->get_opt( 'target' ) == '_none' ) {
+				unset( $attrs[ 'target' ] );
+			} else {
+				$attrs[ 'target' ] =  $this->get_opt( 'target' );
+			}
+		}
+
+		// create element code
+		$link = '<a ';
+
+		foreach ( $attrs AS $key => $value )
+			$link .= $key .'="'. $value .'" ';
+
+		// remove last space
+		$link = substr( $link, 0, -1 );
+
+		$link .= '>'. $matches[ 2 ] .'</a>';
+
+		return $link;
+	}
+
+	/**
+	 * Add value to attribute
+	 * @param array  $attrs
+	 * @param string $attr
+	 * @param string $value
+	 * @param string $default  Optional, default NULL which means tje attribute will be removed when (new) value is empty
+	 * @return New value
+	 */
+	private function add_attr_value( $attrs, $attr_name, $value, $default = NULL ) {
+		if ( key_exists( $attr_name, $attrs ) )
+			$old_value = $attrs[ $attr_name ];
+
+		if ( empty( $old_value ) )
+			$old_value = '';
+
+		$split = split( ' ', strtolower( $old_value ) );
+
+		if ( in_array( $value, $split ) ) {
+			$value = $old_value;
+		} else {
+			$value = ( empty( $old_value ) )
+								? $value
+								: $old_value .' '. $value;
+		}
+
+		if ( empty( $value ) AND $default === NULL ) {
+			unset( $attrs[ $attr_name ] );
+		} else {
+			$attrs[ $attr_name ] = $value;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Experimental phpQuery...
+	 */
+
+	/**
+	 * Filter content
+	 * @param string $content
+	 * @return string
+	 */
+	private function filter_phpquery( $content ) {
 		// Workaround: remove <head>-attributes before using phpQuery
 		$regexp_head = '/<head(.*?)>/is';
 		$clean_head = '<head>';
@@ -141,7 +300,6 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 		// set document
 		$doc = phpQuery::newDocument( $content );
 
-		// @todo
 		/*
 		$regexp_xml = '/<\?xml(.*?)\?>/is';
 		$regexp_xhtml = '/<!DOCTYPE(.*?)xhtml(.*?)>/is';
@@ -181,7 +339,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 			$a = $links->eq( $x );
 	
 			if ( ! $a->attr( 'excluded' ) )
-				$this->set_link( $links->eq( $x ) );
+				$this->set_link_phpquery( $links->eq( $x ) );
 		}
 
 		// remove excluded
@@ -205,7 +363,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 * @param Node $a
 	 * @return Node
 	 */
-	public function set_link( $a ) {
+	public function set_link_phpquery( $a ) {
 		$href = strtolower( $a->attr( 'href' ) . '' );
 		$rel = strtolower( $a->attr( 'rel' ) . '' );
 
@@ -215,12 +373,12 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 
 		// add "external" to rel-attribute
 		if ( $this->get_opt( 'external' ) ){
-			$this->add_attr_value( $a, 'rel', 'external' );
+			$this->add_attr_value_phpquery( $a, 'rel', 'external' );
 		}
 
 		// add "nofollow" to rel-attribute, when doesn't have "follow"
 		if ( $this->get_opt( 'nofollow' ) AND strpos( $rel, 'follow' ) === FALSE ){
-			$this->add_attr_value( $a, 'rel', 'nofollow' );
+			$this->add_attr_value_phpquery( $a, 'rel', 'nofollow' );
 		}
 
 		// set title
@@ -252,7 +410,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 * @param string $value
 	 * @return New value
 	 */
-	private function add_attr_value( $node, $attr, $value ) {
+	private function add_attr_value_phpquery( $node, $attr, $value ) {
 		$old_value = $node->attr( $attr );
 
 		if ( empty( $old_value ) )
@@ -271,20 +429,6 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 		$node->attr( $attr, $value );
 
 		return $value;
-	}
-
-	/**
-	 * Check if link is external
-	 * @param string $href
-	 * @param string $rel
-	 * @return boolean
-	 */
-	private function is_external( $href, $rel ) {
-		return ( isset( $href ) AND ( strpos( $rel, 'external' ) !== FALSE
-												OR  ( strpos( $href, strtolower( get_bloginfo( 'url' ) ) ) === FALSE )
-														AND ( substr( $href, 0, 7 ) == 'http://'
-																OR substr( $href, 0, 8 ) == 'https://'
-																OR substr( $href, 0, 6 ) == 'ftp://' ) ) );
 	}
 
 } // End WP_External_Links Class

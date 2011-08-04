@@ -15,6 +15,17 @@ jQuery(function( $ ){
 		})
 		.change();
 
+	// option filter_excl_sel
+	$( 'input#phpquery' )
+		.change(function(){
+			if ( $( this ).attr( 'checked' ) ) {
+				$( '.filter_excl_sel' ).fadeIn()
+			} else {
+				$( '.filter_excl_sel' ).fadeOut()
+			}
+		})
+		.change();
+
 	// refresh page when updated menu position screen option
 	$( '#screen-meta #menu_position' ).bind( 'ajax_updated', function(){
 		var s = $( this ).val() || '';

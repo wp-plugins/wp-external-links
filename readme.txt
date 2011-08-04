@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.0.0
 Tested up to: 3.2.1
-Stable tag: 1.03
+Stable tag: 1.10
 
 Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
 
@@ -40,11 +40,15 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 == Other notes ==
 
 = Credits =
-* [phpQuery](http://code.google.com/p/phpquery/) made by [Tobiasz Cudnik](http://tobiasz123.wordpress.com)
 * [jQuery Tipsy Plugin](http://plugins.jquery.com/project/tipsy) made by [Jason Frame](http://onehackoranother.com/)
+* [phpQuery](http://code.google.com/p/phpquery/) made by [Tobiasz Cudnik](http://tobiasz123.wordpress.com)
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.10 =
+* Resolved old parsing method (same as version 0.35)
+* Option to use phpQuery for parsing (for those who didn't experience problems with version 1.03)
 
 = 1.03 =
 * Workaround for echo DOCTYPE bug (caused by attributes in the head-tag)
@@ -117,6 +121,7 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 
 == Upgrade Notice ==
 
-= 1.03 =
-* Workaround for echo DOCTYPE bug
+= 1.10 =
+* Resolved old parsing method (same as version 0.35)
+* Option to use phpQuery for parsing (same as version 1.03)
 * This version requires PHP5.2+ and WP3.0+

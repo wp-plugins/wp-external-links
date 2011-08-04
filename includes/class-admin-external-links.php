@@ -23,7 +23,9 @@ final class Admin_External_Links {
 			'filter_comments' => 1,
 			'filter_widgets' => 1,
 			'class_name' => 'ext-link',
+			'fix_js' => 0,
 			'filter_excl_sel' => '.excl-ext-link',
+			'phpquery' => 0,
 		),
 		'style' => array(
 			'icon' => 0,
@@ -297,7 +299,22 @@ final class Admin_External_Links {
 							?></span></label>
 				</td>
 			</tr>
-			<tr class="filter_excl_sel">
+			</table>
+
+			<table class="form-table">
+			<tr>
+				<th style="width:300px;"><?php $this->_e( 'Try solving problems' ) ?>
+						<?php echo $this->tooltip_help( 'Some options to try when a problem occurs. These options can also cause other problems, so be carefull.' ) ?></th>
+				<td><label><?php echo $this->form->checkbox( 'fix_js', 1 ); ?>
+						<span><?php $this->_e( 'Replacing <code>&lt;/a&gt;</code> with <code>&lt;\/a&gt;</code> in JavaScript code.' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'By replacing </a> with <\/a> in JavaScript code these tags will not be processed by the plugin.' ) ?>
+					<br/>
+					<label><?php echo $this->form->checkbox( 'phpquery', 1 ); ?>
+						<span><?php $this->_e( 'Use phpQuery for parsing document.' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'Using phpQuery library for manipulating links. This option is experimental.' ) ?>
+				</td>
+			</tr>
+			<tr class="filter_excl_sel" <?php echo ( $this->form->value( 'phpquery' ) ) ? '' : 'style="display:none;"'; ?>>
 				<th><?php $this->_e( 'Do NOT apply settings on...' ) ?>
 					<?php echo $this->tooltip_help( 'The external links of these selection will be excluded for the settings of this plugin. Define the selection by using CSS selectors.' ) ?></th>
 				<td><label><?php echo $this->form->textarea( 'filter_excl_sel' ); ?>
