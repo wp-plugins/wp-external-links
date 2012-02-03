@@ -7,7 +7,7 @@ if ( ! class_exists( 'WP_Option_Forms_01' ) ):
  * Also with Ajax save support.
  *
  * Requires WordPress 3.0+ and PHP 5.2+
- * 
+ *
  * @version  0.1
  * @author   Victor Villaverde Laan
  * @link     http://www.freelancephp.net/

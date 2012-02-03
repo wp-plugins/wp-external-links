@@ -13,6 +13,12 @@ final class WP_External_Links {
 	 */
 	private $admin = NULL;
 
+	/**
+	 * Array of ignored links
+	 * @var type
+	 */
+	private $ignored = array();
+
 
 	/**
 	 * Constructor
@@ -66,7 +72,6 @@ final class WP_External_Links {
 				if ( $this->get_opt( 'filter_posts' ) ) {
 					add_filter( 'the_title', array( $this, 'call_filter_content' ), $priority );
 					add_filter( 'the_content', array( $this, 'call_filter_content' ), $priority );
-
 					add_filter( 'get_the_excerpt', array( $this, 'call_filter_content' ), $priority );
 					// redundant:
 					//add_filter( 'the_excerpt', array( $this, 'call_filter_content' ), $priority );
@@ -107,6 +112,14 @@ final class WP_External_Links {
 	 * wp_head callback
 	 */
 	public function call_wp_head() {
+		// set ignored
+		$ignored = $this->get_opt( 'ignore' );
+		$ignored = trim( $ignored );
+		$ignored = explode( "\n", $ignored );
+		$ignored = array_map( 'trim', $ignored );
+		$ignored = array_map( 'strtolower', $ignored );
+		$this->ignored = $ignored;
+
 		if ( $this->get_opt( 'use_js' ) AND $this->get_opt( 'target' ) != '_none' ):
 			// set exclude class
 			$excludeClass = ( $this->get_opt( 'no_icon_same_window', 'style' ) AND $this->get_opt( 'no_icon_class', 'style' ) )
@@ -115,7 +128,7 @@ final class WP_External_Links {
 ?>
 <script type="text/javascript">/* <![CDATA[ */
 /* WP External Links Plugin */
-var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php echo $this->get_opt( 'target' ) ?>',excludeClass: '<?php echo $excludeClass ?>' };
+var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>',target: '<?php echo $this->get_opt( 'target' ) ?>',excludeClass: '<?php echo $excludeClass ?>' };
 /* ]]> */</script>
 <?php
 		endif;
@@ -155,8 +168,14 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 * @return boolean
 	 */
 	private function is_external( $href, $rel ) {
+		// check if this links should be ignored
+		for ( $x = 0, $count = count($this->ignored); $x < $count; $x++ ) {
+			if ( strrpos( $href, $this->ignored[ $x ] ) !== FALSE )
+				return FALSE;
+		}
+
 		return ( isset( $href ) AND ( strpos( $rel, 'external' ) !== FALSE
-												OR  ( strpos( $href, strtolower( get_bloginfo( 'url' ) ) ) === FALSE )
+												OR  ( strpos( $href, strtolower( get_bloginfo( 'wpurl' ) ) ) === FALSE )
 														AND ( substr( $href, 0, 7 ) == 'http://'
 																OR substr( $href, 0, 8 ) == 'https://'
 																OR substr( $href, 0, 6 ) == 'ftp://' ) ) );
@@ -174,7 +193,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 		// remove style when no icon classes are found
 		if ( strpos( $content, 'ext-icon-' ) === FALSE ) {
 			// remove style with id wp-external-links-css
-			$content = preg_replace( '/<link(.*?)wp-external-links-css(.*?)\/>[\s+]*/i', '', $content );
+			$content = preg_replace( '/<link ([^>]*)wp-external-links-css([^>]*)\/>[\s+]*/i', '', $content );
 		}
 
 		return $content;
@@ -209,15 +228,16 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 		$title = $this->get_opt( 'title' );
 		$attrs[ 'title' ] = str_replace( '%title%', $attrs[ 'title' ], $title );
 
+		// set user-defined class
+		$class = $this->get_opt( 'class_name', 'general' );
+		if ( $class )
+			$this->add_attr_value( &$attrs, 'class', $class );
+
 		// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found
 		if ( $this->get_opt( 'icon', 'style' ) > 0 AND ( ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE  ){
 			$icon_class = 'ext-icon-'. $this->get_opt( 'icon', 'style' );
 			$this->add_attr_value( &$attrs, 'class', $icon_class );
 		}
-
-		// set user-defined class
-		if ( $this->get_opt( 'class_name', 'style' ) )
-			$this->add_attr_value( &$attrs, 'class', $this->options[ 'class_name' ] );
 
 		// set target
 		if ( ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window', 'style' ) OR ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) ) {
@@ -287,7 +307,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 	 */
 	private function filter_phpquery( $content ) {
 		// Workaround: remove <head>-attributes before using phpQuery
-		$regexp_head = '/<head(.*?)>/is';
+		$regexp_head = '/<head(>|\s(.*?)>)>/is';
 		$clean_head = '<head>';
 
 		// set simple <head> without attributes
@@ -337,7 +357,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'url' ) ?>',target: '<?php
 
 		for( $x = 0; $x < $count; $x++ ) {
 			$a = $links->eq( $x );
-	
+
 			if ( ! $a->attr( 'excluded' ) )
 				$this->set_link_phpquery( $links->eq( $x ) );
 		}

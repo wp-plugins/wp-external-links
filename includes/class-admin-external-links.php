@@ -12,6 +12,9 @@ final class Admin_External_Links {
 	 * @var array
 	 */
 	protected $save_options = array(
+		'meta' => array(
+			'version' => NULL,
+		),
 		'general' => array(
 			'target' => '_none',
 			'use_js' => 1,
@@ -23,6 +26,7 @@ final class Admin_External_Links {
 			'filter_comments' => 1,
 			'filter_widgets' => 1,
 			'class_name' => 'ext-link',
+			'ignore' => 'http://twitter.com/share',
 			'fix_js' => 0,
 			'filter_excl_sel' => '.excl-ext-link',
 			'phpquery' => 0,
@@ -61,48 +65,43 @@ final class Admin_External_Links {
 		$this->form = new WP_Option_Forms_01( WP_EXTERNAL_LINKS_KEY, $this->save_options );
 
 		// init admin
-		if ( is_admin() )
-			$this->init();
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
+
+		if ( is_admin() ) {
+			// set options for add_page_method
+			$menu_pos = $this->form->set_current_option( 'screen' )->value( 'menu_position' );
+
+			// init meta box page
+			$this->meta_box_page->init(
+				// settings
+				array(
+					'menu_title' => $this->__( 'External Links' ),
+					'page_slug' => strtolower( WP_EXTERNAL_LINKS_KEY ),
+					'add_page_method' => ( ! empty( $menu_pos ) AND $menu_pos != 'admin.php' ) ? 'add_submenu_page' : 'add_menu_page',
+					'parent_slug' => ( ! empty( $menu_pos ) AND $menu_pos != 'admin.php' ) ? $menu_pos : NULL,
+					'column_widths' => array(
+						1 => array( 99 ),
+						2 => array( 69, 29 ),
+					),
+					'icon_url' => plugins_url( 'images/icon-wp-external-links-16.png', WP_EXTERNAL_LINKS_FILE ),
+				),
+				// load callback
+				array( $this, 'call_load_meta_box' )
+			);
+		}
 	}
 
 	/**
 	 * Initialize Admin
 	 */
-	public function init() {
+	public function admin_init() {
+		$this->check_version_update();
+
+		// set uninstall hook
+		register_uninstall_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_uninstall' ) );
+
 		// load text domain for translations
 		load_plugin_textdomain( WP_EXTERNAL_LINKS_KEY, FALSE, dirname( plugin_basename( WP_EXTERNAL_LINKS_FILE ) ) . '/lang/' );
-
-		// set activation hook
-		// Does not work properly
-		//register_activation_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_activation' ) );
-		// workaround: call activation, when new format not found
-		$options = get_option( 'wp_external_links-general' );
-		if ( empty( $options ) )
-			$this->call_activation();
-
-		// set deactivation hook
-		register_deactivation_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_deactivation' ) );
-
-		// set options for add_page_method
-		$menu_pos = $this->form->set_current_option( 'screen' )->value( 'menu_position' );
-
-		// init meta box page
-		$this->meta_box_page->init(
-			// settings
-			array(
-				'menu_title' => $this->__( 'External Links' ),
-				'page_slug' => strtolower( WP_EXTERNAL_LINKS_KEY ),
-				'add_page_method' => ( ! empty( $menu_pos ) AND $menu_pos != 'admin.php' ) ? 'add_submenu_page' : 'add_menu_page',
-				'parent_slug' => ( ! empty( $menu_pos ) AND $menu_pos != 'admin.php' ) ? $menu_pos : NULL,
-				'column_widths' => array(
-					1 => array( 99 ),
-					2 => array( 69, 29 ),
-				),
-				'icon_url' => plugins_url( 'images/icon-wp-external-links-16.png', WP_EXTERNAL_LINKS_FILE ),
-			),
-			// load callback
-			array( $this, 'call_load_meta_box' )
-		);
 	}
 
 	/**
@@ -288,7 +287,7 @@ final class Admin_External_Links {
 					<br/>&nbsp;&nbsp;<label><?php echo $this->form->checkbox( 'filter_comments', 1 ); ?>
 							<span><?php $this->_e( 'Comments' ) ?></span></label>
 					<br/>&nbsp;&nbsp;<label><?php echo $this->form->checkbox( 'filter_widgets', 1 ); ?>
-							<span><?php 
+							<span><?php
 								if ( self::check_widget_content_filter() ):
 									$this->_e( 'All widgets' );
 									echo $this->tooltip_help( 'Applied to all widgets by using the "widget_content" filter of the Widget Logic plugin' );
@@ -299,7 +298,16 @@ final class Admin_External_Links {
 							?></span></label>
 				</td>
 			</tr>
+			<tr>
+				<th><?php $this->_e( 'Ignore links containing...' ) ?>
+					<?php echo $this->tooltip_help( 'This plugin will completely ignore links that contain one of the given texts (seperated each text by enter). This check is not case sensitive.' ) ?></th>
+				<td><label><?php echo $this->form->textarea( 'ignore' ); ?>
+						<span class="description"><?php _e( 'Be as specific as you want, f.e.: <code>twitter.com</code> or <code>https://twitter.com</code>. Seperate each by an enter.' ) ?></span></label>
+				</td>
+			</tr>
 			</table>
+
+			<?php echo $this->hr(); ?>
 
 			<table class="form-table">
 			<tr>
@@ -310,8 +318,8 @@ final class Admin_External_Links {
 						<?php echo $this->tooltip_help( 'By replacing </a> with <\/a> in JavaScript code these tags will not be processed by the plugin.' ) ?>
 					<br/>
 					<label><?php echo $this->form->checkbox( 'phpquery', 1 ); ?>
-						<span><?php $this->_e( 'Use phpQuery for parsing document.' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'Using phpQuery library for manipulating links. This option is experimental.' ) ?>
+						<span><?php $this->_e( 'Use phpQuery for parsing document (NOT RECOMMENDED).' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'Using phpQuery library for manipulating links. This option was experimental and now deprecated.' ) ?>
 				</td>
 			</tr>
 			<tr class="filter_excl_sel" <?php echo ( $this->form->value( 'phpquery' ) ) ? '' : 'style="display:none;"'; ?>>
@@ -434,9 +442,18 @@ final class Admin_External_Links {
 	}
 
 	/**
-	 * Activation plugin callback
+	 * Activation callback
 	 */
-	public function call_activation() {
+	public function check_version_update() {
+		// check for version
+		$meta = get_option( 'wp_external_links-meta' );
+		if ( $meta[ 'version' ] == WP_EXTERNAL_LINKS_VERSION )
+			return;
+
+		// set new version
+		$meta[ 'version' ] = WP_EXTERNAL_LINKS_VERSION;
+		update_option( 'wp_external_links-meta', $meta );
+
 		// check for upgrading saved options to v1.00
 		$old_options = get_option( 'WP_External_Links_options' );
 
@@ -465,12 +482,20 @@ final class Admin_External_Links {
 			// delete old format option values
 			delete_option( 'WP_External_Links_options' );
 		}
+
+		// upgrade to v1.20
+		$upgrade_general = get_option( 'wp_external_links-general' );
+
+		if ( ! isset( $upgrade_general[ 'ignore' ] ) ) {
+			$upgrade_general[ 'ignore' ] = $this->save_options[ 'general' ][ 'ignore' ];
+			update_option( 'wp_external_links-general', $upgrade_general );
+		}
 	}
 
 	/**
-	 * Deactivation plugin callback
+	 * Uninstall callback
 	 */
-	public function call_deactivation() {
+	public function call_uninstall() {
 		$this->form->delete_options();
 	}
 

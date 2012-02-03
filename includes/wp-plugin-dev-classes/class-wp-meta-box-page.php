@@ -407,7 +407,7 @@ class WP_Meta_Box_Page_01 {
 		foreach ( $this->meta_boxes AS $box ) {
 			$title = $box[ 'title' ];
 			$id = ( isset( $box[ 'id' ] ) ) ? $box[ 'id' ] : sanitize_title_with_dashes( $title .'-'. ++$nr, 'meta-box-' . $nr );
-			$callback = ( method_exists( $this, $box[ 'callback' ] ) ) ? array( $this, $box[ 'callback' ] ) : $box[ 'callback' ];
+			$callback = ( is_string( $box[ 'callback' ] ) && method_exists( $this, $box[ 'callback' ] ) ) ? array( $this, $box[ 'callback' ] ) : $box[ 'callback' ];
 			$context = $box[ 'context' ];
 			$priority = $box[ 'priority' ];
 

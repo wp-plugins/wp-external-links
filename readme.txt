@@ -2,8 +2,8 @@
 Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.0.0
-Tested up to: 3.2.1
-Stable tag: 1.10
+Tested up to: 3.3.1
+Stable tag: 1.20
 
 Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
 
@@ -45,6 +45,14 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.20 =
+* Added option to ignore certain links or domains
+* Solved tweet button problem by adding link to new ignore option
+* Made JavaScript method consistent to not using JS
+* Solved PHP warnings
+* Solved bug adding own class
+* Changed bloginfo "url" to "wpurl"
 
 = 1.10 =
 * Resolved old parsing method (same as version 0.35)
@@ -120,6 +128,12 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 * Internalization implemented (no language files yet)
 
 == Upgrade Notice ==
+
+= 1.20 =
+Main updates:
+* Added option to ignore certain links or domains
+* Solved tweet button problem
+* Solved PHP warnings and other fixes
 
 = 1.10 =
 * Resolved old parsing method (same as version 0.35)

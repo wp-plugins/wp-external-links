@@ -17,16 +17,10 @@
 	// open external link
 	function openExtLink( a, opts, e ) {
 		var options = opts ? opts : wpExtLinks,
-			href = a.href ? a.href.toLowerCase() : '',
 			rel = a.rel ? a.rel.toLowerCase() : '',
 			n;
 
-		if ( a.href && ( options.excludeClass.length == 0 || a.className.indexOf( options.excludeClass ) )
-					&& ( rel.indexOf( 'external' ) > -1
-							|| ( ( href.indexOf( options.baseUrl ) === -1 ) &&
-									( href.substr( 0, 7 ) == 'http://'
-										|| href.substr( 0, 8 ) == 'https://'
-										|| href.substr( 0, 6 ) == 'ftp://'  ) ) ) ) {
+		if ( a.href  && rel.indexOf( 'external' ) > -1 && ( options.excludeClass.length == 0 || a.className.indexOf( options.excludeClass ) ) ) {
 			// open link in a new window
 			n = window.open( a.href, options.target );
 			n.focus();
