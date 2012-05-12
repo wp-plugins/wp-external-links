@@ -47,7 +47,9 @@ final class WP_External_Links {
 	public function call_wp() {
 		if ( ! is_admin() && ! is_feed() ) {
 			// Include phpQuery
-			require_once( 'phpQuery.php' );
+			if ( ! class_exists( 'phpQuery' ) ) {
+				require_once( 'phpQuery.php' );
+			}
 
 			// add wp_head for setting js vars and css style
 			add_action( 'wp_head', array( $this, 'call_wp_head' ) );
@@ -333,13 +335,6 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>',target: '<?p
 		}
 		*/
 
-		// remove style when no icon classes are found
-		if ( strpos( $content, 'ext-icon-' ) === FALSE ) {
-			// remove icon css
-			$css = $doc->find( 'link#wp-external-links-css' )->eq(0);
-			$css->remove();
-		}
-
 		$excl_sel = $this->get_opt( 'filter_excl_sel' );
 
 		// set excludes
@@ -367,6 +362,13 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>',target: '<?p
 			$excludes = $doc->find( $excl_sel );
 			$excludes->filter( 'a' )->removeAttr( 'excluded' );
 			$excludes->find( 'a' )->removeAttr( 'excluded' );
+		}
+
+		// remove style when no icon classes are found
+		if ( strpos( $doc, 'ext-icon-' ) === FALSE ) {
+			// remove icon css
+			$css = $doc->find( 'link#wp-external-links-css' )->eq(0);
+			$css->remove();
 		}
 
 		// get document content

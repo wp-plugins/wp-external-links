@@ -251,7 +251,7 @@ class WP_Option_Forms_01 {
 	 * @return string
 	 */
 	public function select( $key, $options = array(), $attrs = array() ) {
-		$html = '<select '. $this->attrs( $attrs, $key, $value ) .'>';
+		$html = '<select '. $this->attrs( $attrs, $key ) .'>';
 
 		foreach ( $options AS $value => $label ) {
 			$selected = ( $value == $this->value( $key ) ) ? ' selected="selected"' : '';
@@ -275,7 +275,7 @@ class WP_Option_Forms_01 {
 		$html = '';
 		$html .= '<p class="button-controls" style="text-align:right;">';
 		$html .= '<img alt="" title="" class="ajax-feedback" src="'. get_bloginfo( 'url' ) .'/wp-admin/images/wpspin_light.gif" style="visibility: hidden;" />';
-		$html .= '<input type="submit" '. $this->attrs( $attrs, $key, __( 'Save Changes' ) ) .' />';
+		$html .= '<input type="submit" '. $this->attrs( $attrs, '', __( 'Save Changes' ) ) .' />';
 		$html .= '</p>';
 		return $html;
 	}

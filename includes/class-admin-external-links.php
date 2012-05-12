@@ -195,7 +195,7 @@ final class Admin_External_Links {
 	 */
 	public function call_page_title( $title ) {
 		// when updated set the update message
-		if ( $_GET[ 'settings-updated' ] == 'true' ) {
+		if ( isset($_GET[ 'settings-updated' ]) && $_GET[ 'settings-updated' ] == 'true' ) {
 			$title .= '<div class="updated settings-error" id="setting-error-settings_updated" style="display:none">'
 				. '<p><strong>' . __( 'Settings saved.' ) .'</strong></p>'
 				. '</div>';
