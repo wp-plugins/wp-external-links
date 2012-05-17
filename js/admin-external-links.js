@@ -19,9 +19,9 @@ jQuery(function( $ ){
 	$( 'input#phpquery' )
 		.change(function(){
 			if ( $( this ).attr( 'checked' ) ) {
-				$( '.filter_excl_sel' ).fadeIn()
+				$( '.filter_excl_sel' ).fadeIn();
 			} else {
-				$( '.filter_excl_sel' ).fadeOut()
+				$( '.filter_excl_sel' ).fadeOut();
 			}
 		})
 		.change();

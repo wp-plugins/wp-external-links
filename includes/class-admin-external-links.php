@@ -11,30 +11,35 @@ final class Admin_External_Links {
 	 * Options to be saved and their default values
 	 * @var array
 	 */
-	protected $save_options = array(
+	public $save_options = array(
 		'meta' => array(
 			'version' => NULL,
 		),
-		'general' => array(
+		'main' => array(
 			'target' => '_none',
 			'use_js' => 1,
-			'external' => 1,
-			'nofollow' => 1,
-			'title' => '%title%',
 			'filter_page' => 1,
 			'filter_posts' => 1,
 			'filter_comments' => 1,
 			'filter_widgets' => 1,
-			'class_name' => 'ext-link',
 			'ignore' => 'http://twitter.com/share',
-			'fix_js' => 0,
-			'filter_excl_sel' => '.excl-ext-link',
-			'phpquery' => 0,
+		),
+		'seo' => array(
+			'external' => 1,
+			'nofollow' => 1,
+			'title' => '%title%',
 		),
 		'style' => array(
+			'class_name' => 'ext-link',
 			'icon' => 0,
+			'image_no_icon' => 1,
 			'no_icon_class' => 'no-ext-icon',
 			'no_icon_same_window' => 0,
+		),
+		'extra' => array(
+			'fix_js' => 0,
+			'phpquery' => 0,
+			'filter_excl_sel' => '.excl-ext-link',
 		),
 		'screen' => array(
 			'menu_position' => NULL,
@@ -52,17 +57,21 @@ final class Admin_External_Links {
 	 * @var WP_Ajax_Option_Form
 	 */
 	public $form = NULL;
+	static public $staticForm = NULL;
 
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
+		$this->check_version_update();
+
 		// set meta box page
 		$this->meta_box_page = new WP_Meta_Box_Page_01();
 
 		// set ajax forms (also used by front-end)
 		$this->form = new WP_Option_Forms_01( WP_EXTERNAL_LINKS_KEY, $this->save_options );
+		self::$staticForm = $this->form;
 
 		// init admin
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -95,10 +104,8 @@ final class Admin_External_Links {
 	 * Initialize Admin
 	 */
 	public function admin_init() {
-		$this->check_version_update();
-
 		// set uninstall hook
-		register_uninstall_hook( WP_EXTERNAL_LINKS_FILE, array( $this, 'call_uninstall' ) );
+		register_uninstall_hook( WP_EXTERNAL_LINKS_FILE, array( 'Admin_External_Links', 'call_uninstall' ) );
 
 		// load text domain for translations
 		load_plugin_textdomain( WP_EXTERNAL_LINKS_KEY, FALSE, dirname( plugin_basename( WP_EXTERNAL_LINKS_FILE ) ) . '/lang/' );
@@ -134,7 +141,9 @@ final class Admin_External_Links {
 		// add meta boxes
 		// add_meta_box( $title, $callback, $context = 'normal', $id = NULL, $priority = 'default', $callback_args = NULL )
 		$meta_box->add_meta_box( $this->__( 'General Settings' ), array( $this, 'call_box_general_settings' ), 1 )
+							->add_meta_box( $this->__( 'SEO Settings' ), array( $this, 'call_box_seo_settings' ), 1 )
 							->add_meta_box( $this->__( 'Style Settings' ), array( $this, 'call_box_style_settings' ), 1 )
+							->add_meta_box( $this->__( 'Extra Settings' ), array( $this, 'call_box_extra_settings' ), 1 )
 							->add_meta_box( $this->__( 'About this Plugin' ), array( $this, 'call_box_about' ), 2 )
 							->add_meta_box( $this->__( 'Other Plugins' ), array( $this, 'call_box_other_plugins' ), 2 );
 
@@ -211,73 +220,48 @@ final class Admin_External_Links {
 	 * Meta Box: General Settings
 	 */
 	public function call_box_general_settings() {
-		echo $this->form->set_current_option( 'general' )->open_form();
+		echo $this->form->set_current_option( 'main' )->open_form();
 ?>
 		<fieldset class="options">
 			<table class="form-table">
 			<tr>
-				<th style="width:300px;"><?php $this->_e( 'Set <code>target</code> for external links' ) ?>
+				<th style="width:250px;"><?php $this->_e( 'Open external links in...' ) ?>
 						<?php echo $this->tooltip_help( 'Specify the target (window or tab) for opening external links.' ) ?></th>
 				<td class="target_external_links">
-					<label><?php echo $this->form->radio( 'target', '_blank', array( 'class' => 'field_target' ) ); ?>
-						<span><?php $this->_e( '<code>_blank</code>, new window' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'Open every external link in a new window or tab.' ) ?>
+					<label><?php echo $this->form->radio( 'target', '_none', array( 'class' => 'field_target' ) ); ?>
+						<span><?php $this->_e( 'Same window or tab (<code>_none</code>)' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'Open in current window or tab, when framed in the same frame.' ) ?>
 					<br/>
+					<label><?php echo $this->form->radio( 'target', '_blank', array( 'class' => 'field_target' ) ); ?>
+						<span><?php $this->_e( 'New window or tab (<code>_blank</code>)' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'Open every external link in a new window or tab.' ) ?>
+					<br  style="margin-bottom:15px;" />
 					<label><?php echo $this->form->radio( 'target', '_top', array( 'class' => 'field_target' ) ); ?>
-						<span><?php $this->_e( '<code>_top</code>, topmost frame' ) ?></span></label>
+						<span><?php $this->_e( 'Topmost frame (<code>_top</code>)' ) ?></span></label>
 						<?php echo $this->tooltip_help( 'Open in current window or tab, when framed in the topmost frame.' ) ?>
 					<br/>
 					<label><?php echo $this->form->radio( 'target', '_new', array( 'class' => 'field_target' ) ); ?>
-						<span><?php $this->_e( '<code>_new</code>, seperate window' ) ?></span></label>
+						<span><?php $this->_e( 'Seperate window or tab (<code>_new</code>)' ) ?></span></label>
 						<?php echo $this->tooltip_help( 'Open new window the first time and use this window for each external link.' ) ?>
-					<br/>
-					<label><?php echo $this->form->radio( 'target', '_none', array( 'class' => 'field_target' ) ); ?>
-						<span><?php $this->_e( '<code>_none</code>, current window' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'Open in current window or tab, when framed in the same frame.' ) ?>
 				</td>
 			</tr>
 			<tr>
-				<th><?php $this->_e( 'Add to <code>rel</code>-attribute' ) ?>
-						<?php echo $this->tooltip_help( 'Set values for the "rel"-atribute of external links.' ) ?></th>
-				<td><label><?php echo $this->form->checkbox( 'external', 1 ); ?>
-						<span><?php $this->_e( 'Add <code>"external"</code>' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'Add "external" to the "rel"-attribute of external links.' ) ?>
-					<br/><label><?php echo $this->form->checkbox( 'nofollow', 1 ); ?>
-						<span><?php $this->_e( 'Add <code>"nofollow"</code>' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'Add "nofollow" to the "rel"-attribute of external links (unless link already has "follow").' ) ?>
-				</td>
-			</tr>
-			<tr>
-				<th><?php $this->_e( 'Add to <code>class</code>-attribute' ) ?>
-						<?php echo $this->tooltip_help( 'Add one or more extra classes to the external links, seperated by a space. It is optional, else just leave field blank.' ) ?></th>
-				<td><label><?php echo $this->form->text( 'class_name' ); ?></label></td>
-			</tr>
-			<tr>
-				<th><?php $this->_e( 'Set <code>title</code>-attribute' ) ?>
-						<?php echo $this->tooltip_help( 'Set title attribute for external links. Use %title% for the original title value.' ) ?></th>
-				<td><label><?php echo $this->form->text( 'title' ); ?>
-					<br/><span class="description"><?php _e( 'Use <code>%title%</code> for the original title value.' ) ?></span></label></td>
-			</tr>
-			</table>
-
-			<?php echo $this->hr(); ?>
-
-			<table class="form-table">
-			<tr>
-				<th style="width:300px;"><?php $this->_e( 'Valid XHTML Strict' ) ?>
-						<?php echo $this->tooltip_help( 'The "target"-attribute is not valid XHTML strict code. Enable this option to remove the target from external links and use the JavaScript method (built-in this plugin) for opening links.' ) ?></th>
+				<th><?php $this->_e( 'Use JavaScript method' ) ?>
+					<?php echo $this->tooltip_help( 'Enable this option to use the JavaScript method for opening links, which prevents adding target attribute in the HTML code.' ) ?></label>
+				</th>
 				<td>
 					<label><?php echo $this->form->checkbox( 'use_js', 1, array( 'class' => 'field_use_js' ) ); ?>
-					<span><?php $this->_e( 'Use JavaScript for opening links in given target.' ) ?></span></label>
+					<span><?php $this->_e( 'Use JavaScript for opening links (valid XHTML Strict).' ) ?></span>
 				</td>
 			</tr>
 			</table>
 
 			<?php echo $this->hr(); ?>
 
+			<h4><?php $this->_e( 'Apply on' ) ?></h4>
 			<table class="form-table">
 			<tr>
-				<th style="width:300px;"><?php $this->_e( 'Apply settings to external links on...' ) ?>
+				<th style="width:250px;"><?php $this->_e( 'Apply plugin settings on...' ) ?>
 						<?php echo $this->tooltip_help( 'Choose contents for applying settings to external links.' ) ?></th>
 				<td>
 					<label><?php echo $this->form->checkbox( 'filter_page', 1 ); ?>
@@ -299,40 +283,48 @@ final class Admin_External_Links {
 				</td>
 			</tr>
 			<tr>
-				<th><?php $this->_e( 'Ignore links containing...' ) ?>
-					<?php echo $this->tooltip_help( 'This plugin will completely ignore links that contain one of the given texts (seperated each text by enter). This check is not case sensitive.' ) ?></th>
+				<th><?php $this->_e( 'Ignore links (URL) containing...' ) ?>
+					<?php echo $this->tooltip_help( 'This plugin will completely ignore links that contain one of the given texts in the URL. Use enter to seperate each text. This check is not case sensitive.' ) ?></th>
 				<td><label><?php echo $this->form->textarea( 'ignore' ); ?>
 						<span class="description"><?php _e( 'Be as specific as you want, f.e.: <code>twitter.com</code> or <code>https://twitter.com</code>. Seperate each by an enter.' ) ?></span></label>
 				</td>
 			</tr>
 			</table>
+		</fieldset>
 
-			<?php echo $this->hr(); ?>
+<?php
+		echo $this->form->submit();
+		echo $this->form->close_form();
+	}
 
+	/**
+	 * Meta Box: SEO Settings
+	 */
+	public function call_box_seo_settings() {
+		echo $this->form->set_current_option( 'seo' )->open_form();
+?>
+		<fieldset class="options">
 			<table class="form-table">
 			<tr>
-				<th style="width:300px;"><?php $this->_e( 'Try solving problems' ) ?>
-						<?php echo $this->tooltip_help( 'Some options to try when a problem occurs. These options can also cause other problems, so be carefull.' ) ?></th>
-				<td><label><?php echo $this->form->checkbox( 'fix_js', 1 ); ?>
-						<span><?php $this->_e( 'Replacing <code>&lt;/a&gt;</code> with <code>&lt;\/a&gt;</code> in JavaScript code.' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'By replacing </a> with <\/a> in JavaScript code these tags will not be processed by the plugin.' ) ?>
+				<th style="width:250px;"><?php $this->_e( 'Add to <code>rel</code>-attribute' ) ?>
+						<?php echo $this->tooltip_help( 'Set values for the "rel"-atribute of external links.' ) ?></th>
+				<td><label><?php echo $this->form->checkbox( 'nofollow', 1 ); ?>
+						<span><?php $this->_e( 'Add <code>"nofollow"</code>' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'Add "nofollow" to the "rel"-attribute of external links (unless link already has "follow").' ) ?>
 					<br/>
-					<label><?php echo $this->form->checkbox( 'phpquery', 1 ); ?>
-						<span><?php $this->_e( 'Use phpQuery for parsing document (NOT RECOMMENDED).' ) ?></span></label>
-						<?php echo $this->tooltip_help( 'Using phpQuery library for manipulating links. This option was experimental and now deprecated.' ) ?>
+					<label><?php echo $this->form->checkbox( 'external', 1 ); ?>
+						<span><?php $this->_e( 'Add <code>"external"</code>' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'Add "external" to the "rel"-attribute of external links.' ) ?>
 				</td>
 			</tr>
-			<tr class="filter_excl_sel" <?php echo ( $this->form->value( 'phpquery' ) ) ? '' : 'style="display:none;"'; ?>>
-				<th><?php $this->_e( 'Do NOT apply settings on...' ) ?>
-					<?php echo $this->tooltip_help( 'The external links of these selection will be excluded for the settings of this plugin. Define the selection by using CSS selectors.' ) ?></th>
-				<td><label><?php echo $this->form->textarea( 'filter_excl_sel' ); ?>
-						<span class="description"><?php _e( 'Define selection by using CSS selectors, f.e.: <code>.excl-ext-link, .entry-title, #comments-title</code> (look <a href="http://code.google.com/p/phpquery/wiki/Selectors" target="_blank">here</a> for available selectors).' ) ?></span></label>
-				</td>
+			<tr>
+				<th><?php $this->_e( 'Set <code>title</code>-attribute' ) ?>
+						<?php echo $this->tooltip_help( 'Set title attribute for external links. Use %title% for the original title value.' ) ?></th>
+				<td><label><?php echo $this->form->text( 'title' ); ?>
+					<br/><span class="description"><?php _e( 'Use <code>%title%</code> for the original title value.' ) ?></span></label></td>
 			</tr>
 			</table>
 		</fieldset>
-
-		<p style="position:absolute;"><a id="admin_menu_position" href="#"><?php _e( 'Change menu position in "Screen Options"' ) ?></a></p>
 <?php
 		echo $this->form->submit();
 		echo $this->form->close_form();
@@ -347,7 +339,7 @@ final class Admin_External_Links {
 		<fieldset class="options">
 			<table class="form-table">
 			<tr>
-				<th style="width:300px;"><?php $this->_e( 'Set icon for external link' ) ?>
+				<th style="width:250px;"><?php $this->_e( 'Set icon for external link' ) ?>
 						<?php echo $this->tooltip_help( 'Set an icon that wll be shown for external links. See example on the right side.' ) ?></th>
 				<td>
 					<div>
@@ -373,12 +365,68 @@ final class Admin_External_Links {
 				</td>
 			</tr>
 			<tr>
-				<th style="width:300px;"><?php $this->_e( 'Set no-icon class' ) ?>
+				<th><?php $this->_e( 'Skip images' ) ?>
+						<?php echo $this->tooltip_help( 'Don\'t show icon for external links containing images.' ) ?></th>
+				<td><label><?php echo $this->form->checkbox( 'image_no_icon', 1 ); ?>
+					<span><?php $this->_e( 'No icon for extenal links with images' ) ?></span></label>
+				</td>
+			</tr>
+			<tr>
+				<th style="width:250px;"><?php $this->_e( 'Set no-icon class' ) ?>
 						<?php echo $this->tooltip_help( 'Set this class for links, that should not have the external link icon.' ) ?></th>
 				<td><label><?php echo $this->form->text( 'no_icon_class', array( 'class' => '' ) ); ?></label>
 					<br/><label><?php echo $this->form->checkbox( 'no_icon_same_window', 1 ); ?>
 					<span><?php $this->_e( 'Always open links with no-icon class in same window or tab' ) ?></span></label>
 						<?php echo $this->tooltip_help( 'When enabled external links containing the no-icon class will always be opened in the current window or tab. No matter which target is set.' ) ?>
+				</td>
+			</tr>
+			<tr>
+				<th><?php $this->_e( 'Add to <code>class</code>-attribute' ) ?>
+						<?php echo $this->tooltip_help( 'Add one or more extra classes to the external links, seperated by a space. It is optional, else just leave field blank.' ) ?></th>
+				<td><label><?php echo $this->form->text( 'class_name' ); ?></label></td>
+			</tr>
+			</table>
+		</fieldset>
+<?php
+		echo $this->form->submit();
+		echo $this->form->close_form();
+	}
+
+	/**
+	 * Meta Box: Extra Settings
+	 */
+	public function call_box_extra_settings() {
+		echo $this->form->set_current_option( 'extra' )->open_form();
+?>
+		<fieldset class="options">
+			<table class="form-table">
+			<tr>
+				<th style="width:250px;"><?php $this->_e( 'Solving problems' ) ?>
+						<?php echo $this->tooltip_help( 'Some options to try when a problem occurs. These options can also cause other problems, so be carefull.' ) ?></th>
+				<td><label><?php echo $this->form->checkbox( 'fix_js', 1 ); ?>
+						<span><?php $this->_e( 'Replacing <code>&lt;/a&gt;</code> with <code>&lt;\/a&gt;</code> in JavaScript code.' ) ?></span></label>
+						<?php echo $this->tooltip_help( 'By replacing </a> with <\/a> in JavaScript code these tags will not be processed by the plugin.' ) ?>
+				</td>
+			</tr>
+			<tr>
+				<th style="width:250px;"><?php $this->_e( 'Use phpQuery library' ) ?>
+						<?php echo $this->tooltip_help( 'Using phpQuery library for manipulating links. This option is experimental.' ) ?></th>
+				<td><label><?php echo $this->form->checkbox( 'phpquery', 1 ); ?>
+						<span><?php $this->_e( 'Use phpQuery for parsing document.' ) ?></span>
+						<span class="description">(Test it first!)</span></label>
+				</td>
+			</tr>
+			<tr class="filter_excl_sel" <?php echo ( $this->form->value( 'phpquery' ) ) ? '' : 'style="display:none;"'; ?>>
+				<th><?php $this->_e( 'Do NOT apply settings on...' ) ?>
+					<?php echo $this->tooltip_help( 'The external links of these selection will be excluded for the settings of this plugin. Define the selection by using CSS selectors.' ) ?></th>
+				<td><label><?php echo $this->form->textarea( 'filter_excl_sel' ); ?>
+						<span class="description"><?php _e( 'Define selection by using CSS selectors, f.e.: <code>.excl-ext-link, .entry-title, #comments-title</code> (look <a href="http://code.google.com/p/phpquery/wiki/Selectors" target="_blank">here</a> for available selectors).' ) ?></span></label>
+				</td>
+			</tr>
+			<tr>
+				<th style="width:250px;"><?php $this->_e( 'Plugin menu position' ) ?>
+					<?php echo $this->tooltip_help( 'Change the menu position of this plugin in "Screen Options".' ) ?></th>
+				<td><label><a id="admin_menu_position" href="#"><?php _e( 'Change menu position' ) ?></a></label>
 				</td>
 			</tr>
 			</table>
@@ -460,23 +508,22 @@ final class Admin_External_Links {
 		if ( ! empty( $old_options ) ) {
 			$new_options = $this->save_options;
 
-			foreach ( $old_options AS $option ) {
-				$new_options[ 'general' ][ 'target' ] = $old_options[ 'target' ];
-				$new_options[ 'general' ][ 'use_js' ] = $old_options[ 'use_js' ];
-				$new_options[ 'general' ][ 'external' ] = $old_options[ 'external' ];
-				$new_options[ 'general' ][ 'nofollow' ] = $old_options[ 'nofollow' ];
-				$new_options[ 'general' ][ 'filter_page' ] = $old_options[ 'filter_whole_page' ];
-				$new_options[ 'general' ][ 'filter_posts' ] = $old_options[ 'filter_posts' ];
-				$new_options[ 'general' ][ 'filter_comments' ] = $old_options[ 'filter_comments' ];
-				$new_options[ 'general' ][ 'filter_widgets' ] = $old_options[ 'filter_widgets' ];
-				$new_options[ 'general' ][ 'class_name' ] = $old_options[ 'class_name' ];
-				$new_options[ 'style' ][ 'icon' ] = $old_options[ 'icon' ];
-				$new_options[ 'style' ][ 'no_icon_class' ] = $old_options[ 'no_icon_class' ];
-				$new_options[ 'style' ][ 'no_icon_same_window' ] = $old_options[ 'no_icon_same_window' ];
-			}
+			$new_options[ 'main' ][ 'target' ] = $old_options[ 'target' ];
+			$new_options[ 'main' ][ 'use_js' ] = $old_options[ 'use_js' ];
+			$new_options[ 'main' ][ 'filter_page' ] = $old_options[ 'filter_whole_page' ];
+			$new_options[ 'main' ][ 'filter_posts' ] = $old_options[ 'filter_posts' ];
+			$new_options[ 'main' ][ 'filter_comments' ] = $old_options[ 'filter_comments' ];
+			$new_options[ 'main' ][ 'filter_widgets' ] = $old_options[ 'filter_widgets' ];
+			$new_options[ 'seo' ][ 'external' ] = $old_options[ 'external' ];
+			$new_options[ 'seo' ][ 'nofollow' ] = $old_options[ 'nofollow' ];
+			$new_options[ 'style' ][ 'class_name' ] = $old_options[ 'class_name' ];
+			$new_options[ 'style' ][ 'icon' ] = $old_options[ 'icon' ];
+			$new_options[ 'style' ][ 'no_icon_class' ] = $old_options[ 'no_icon_class' ];
+			$new_options[ 'style' ][ 'no_icon_same_window' ] = $old_options[ 'no_icon_same_window' ];
 
 			// save new format option values
-			update_option( 'wp_external_links-general', $new_options[ 'general' ] );
+			update_option( 'wp_external_links-main', $new_options[ 'main' ] );
+			update_option( 'wp_external_links-seo', $new_options[ 'seo' ] );
 			update_option( 'wp_external_links-style', $new_options[ 'style' ] );
 
 			// delete old format option values
@@ -484,19 +531,57 @@ final class Admin_External_Links {
 		}
 
 		// upgrade to v1.20
-		$upgrade_general = get_option( 'wp_external_links-general' );
+		$upgrade_main = get_option( 'wp_external_links-main' );
 
-		if ( ! isset( $upgrade_general[ 'ignore' ] ) ) {
-			$upgrade_general[ 'ignore' ] = $this->save_options[ 'general' ][ 'ignore' ];
-			update_option( 'wp_external_links-general', $upgrade_general );
+		if ( ! isset( $upgrade_main[ 'ignore' ] ) ) {
+			$upgrade_main[ 'ignore' ] = $this->save_options[ 'main' ][ 'ignore' ];
+			update_option( 'wp_external_links-main', $upgrade_main );
+		}
+
+		// upgrade to v1.30
+		if ( WP_EXTERNAL_LINKS_VERSION == '1.30' ) {
+			$new_options = $this->save_options;
+			$general = get_option( 'wp_external_links-general' );
+			$style = get_option( 'wp_external_links-style' );
+
+			if ( isset( $general[ 'target' ] ) ) $new_options[ 'main' ][ 'target' ] = $general[ 'target' ];
+			$new_options[ 'main' ][ 'use_js' ] = ( isset( $general[ 'use_js' ] ) ) ? $general[ 'use_js' ] : 0;
+			$new_options[ 'main' ][ 'filter_page' ] = ( isset( $general[ 'filter_whole_page' ] ) ) ? $general[ 'filter_whole_page' ] : 0;
+			$new_options[ 'main' ][ 'filter_posts' ] = ( isset( $general[ 'filter_posts' ] ) ) ? $general[ 'filter_posts' ] : 0;
+			$new_options[ 'main' ][ 'filter_comments' ] = ( isset( $general[ 'filter_comments' ] ) ) ? $general[ 'filter_comments' ] : 0;
+			$new_options[ 'main' ][ 'filter_widgets' ] = ( isset( $general[ 'filter_widgets' ] ) ) ? $general[ 'filter_widgets' ] : 0;
+			if ( isset( $general[ 'ignore' ] ) ) $new_options[ 'main' ][ 'ignore' ] = $general[ 'ignore' ];
+
+			$new_options[ 'seo' ][ 'external' ] = ( isset( $general[ 'external' ] ) ) ? $general[ 'external' ] : 0;
+			$new_options[ 'seo' ][ 'nofollow' ] = ( isset( $general[ 'nofollow' ] ) ) ? $general[ 'nofollow' ] : 0;
+			if ( isset( $general[ 'title' ] ) ) $new_options[ 'seo' ][ 'title' ] = $general[ 'title' ];
+
+			if ( isset( $general[ 'class_name' ] ) ) $new_options[ 'style' ][ 'class_name' ] = $general[ 'class_name' ];
+
+			if ( isset( $style[ 'icon' ] ) ) $new_options[ 'style' ][ 'icon' ] = $style[ 'icon' ];
+			if ( isset( $style[ 'no_icon_class' ] ) ) $new_options[ 'style' ][ 'no_icon_class' ] = $style[ 'no_icon_class' ];
+			$new_options[ 'style' ][ 'no_icon_same_window' ] = ( isset( $style[ 'no_icon_same_window' ] ) ) ? $style[ 'no_icon_same_window' ] : 0;
+
+			$new_options[ 'extra' ][ 'fix_js' ] = ( isset( $general[ 'fix_js' ] ) ) ? $general[ 'fix_js' ] : 0;
+			$new_options[ 'extra' ][ 'phpquery' ] = ( isset( $general[ 'phpquery' ] ) ) ? $general[ 'phpquery' ] : 0;
+			if ( isset( $general[ 'filter_excl_sel' ] ) ) $new_options[ 'extra' ][ 'filter_excl_sel' ] = $general[ 'filter_excl_sel' ];
+
+			// save new format option values
+			update_option( 'wp_external_links-main', $new_options[ 'main' ] );
+			update_option( 'wp_external_links-seo', $new_options[ 'seo' ] );
+			update_option( 'wp_external_links-style', $new_options[ 'style' ] );
+			update_option( 'wp_external_links-extra', $new_options[ 'extra' ] );
+
+			// delete old format
+			delete_option( 'wp_external_links-general' );
 		}
 	}
 
 	/**
 	 * Uninstall callback
 	 */
-	public function call_uninstall() {
-		$this->form->delete_options();
+	static public function call_uninstall() {
+		self::$staticForm->delete_options();
 	}
 
 	/**

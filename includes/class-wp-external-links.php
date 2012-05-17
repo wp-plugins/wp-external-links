@@ -3,6 +3,8 @@ if ( ! class_exists( 'WP_External_Links' ) ):
 
 /**
  * Class WP_External_Links
+ * @package WordPress
+ * @since
  * @category WordPress Plugins
  */
 final class WP_External_Links {
@@ -34,11 +36,19 @@ final class WP_External_Links {
 	/**
 	 * Quick helper method for getting saved option values
 	 * @param string $key
-	 * @param string $option_name  Optional, default looking in 'general' settings
 	 * @return mixed
 	 */
-	public function get_opt( $key, $option_name = 'general' ) {
-		return $this->admin->form->value( $key, NULL, $option_name );
+	public function get_opt( $key ) {
+		$lookup = $this->admin->save_options;
+
+		foreach ( $lookup as $option_name => $values ) {
+			$value = $this->admin->form->value( $key, '___NONE___', $option_name );
+
+			if ($value !== '___NONE___')
+				return $value;
+		}
+
+		throw new Exception('Option with key "' . $key . '" does not exist.');
 	}
 
 	/**
@@ -124,13 +134,13 @@ final class WP_External_Links {
 
 		if ( $this->get_opt( 'use_js' ) AND $this->get_opt( 'target' ) != '_none' ):
 			// set exclude class
-			$excludeClass = ( $this->get_opt( 'no_icon_same_window', 'style' ) AND $this->get_opt( 'no_icon_class', 'style' ) )
-							? $this->get_opt( 'no_icon_class', 'style' )
+			$excludeClass = ( $this->get_opt( 'no_icon_same_window' ) AND $this->get_opt( 'no_icon_class' ) )
+							? $this->get_opt( 'no_icon_class' )
 							: '';
 ?>
 <script type="text/javascript">/* <![CDATA[ */
 /* WP External Links Plugin */
-var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>',target: '<?php echo $this->get_opt( 'target' ) ?>',excludeClass: '<?php echo $excludeClass ?>' };
+var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?php echo $this->get_opt( 'target' ) ?>', excludeClass: '<?php echo $excludeClass ?>' };
 /* ]]> */</script>
 <?php
 		endif;
@@ -231,18 +241,23 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>',target: '<?p
 		$attrs[ 'title' ] = str_replace( '%title%', $attrs[ 'title' ], $title );
 
 		// set user-defined class
-		$class = $this->get_opt( 'class_name', 'general' );
+		$class = $this->get_opt( 'class_name' );
 		if ( $class )
 			$this->add_attr_value( &$attrs, 'class', $class );
 
-		// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found
-		if ( $this->get_opt( 'icon', 'style' ) > 0 AND ( ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE  ){
+		// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found or content contains image
+		if ( $this->get_opt( 'icon' ) > 0
+					AND ( ! $this->get_opt( 'no_icon_class' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class' ) ) === FALSE )
+					AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE
+					AND !( $this->get_opt( 'image_no_icon' ) AND (bool) preg_match( '/<img([^>]*)>/is', $matches[ 2 ] )) ){
 			$icon_class = 'ext-icon-'. $this->get_opt( 'icon', 'style' );
 			$this->add_attr_value( &$attrs, 'class', $icon_class );
 		}
 
 		// set target
-		if ( ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window', 'style' ) OR ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) ) {
+		if ( ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window' )
+					OR ! $this->get_opt( 'no_icon_class' )
+					OR strpos( $attrs[ 'class' ], $this->get_opt( 'no_icon_class' ) ) === FALSE ) ) {
 			if ( $this->get_opt( 'target' ) == '_none' ) {
 				unset( $attrs[ 'target' ] );
 			} else {
@@ -408,18 +423,18 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>',target: '<?p
 		$a->attr( 'title', $title );
 
 		// add icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found
-		if ( $this->get_opt( 'icon', 'style' ) > 0 AND ( ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $a->attr( 'class' ), $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) AND strpos( $a->attr( 'class' ), 'ext-icon-' ) === FALSE  ){
-			$icon_class = 'ext-icon-'. $this->get_opt( 'icon', 'style' );
+		if ( $this->get_opt( 'icon' ) > 0 AND ( ! $this->get_opt( 'no_icon_class' ) OR strpos( $a->attr( 'class' ), $this->get_opt( 'no_icon_class' ) ) === FALSE ) AND strpos( $a->attr( 'class' ), 'ext-icon-' ) === FALSE  ){
+			$icon_class = 'ext-icon-'. $this->get_opt( 'icon' );
 			$a->addClass( $icon_class );
 		}
 
 		// add user-defined class
-		if ( $this->get_opt( 'class_name', 'style' ) ){
-			$a->addClass( $this->get_opt( 'class_name', 'style' ) );
+		if ( $this->get_opt( 'class_name' ) ){
+			$a->addClass( $this->get_opt( 'class_name' ) );
 		}
 
 		// set target
-		if ( $this->get_opt( 'target' ) != '_none' AND ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window', 'style' ) OR ! $this->get_opt( 'no_icon_class', 'style' ) OR strpos( $a->attr( 'class' ), $this->get_opt( 'no_icon_class', 'style' ) ) === FALSE ) )
+		if ( $this->get_opt( 'target' ) != '_none' AND ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window' ) OR ! $this->get_opt( 'no_icon_class' ) OR strpos( $a->attr( 'class' ), $this->get_opt( 'no_icon_class' ) ) === FALSE ) )
 			$a->attr( 'target', $this->get_opt( 'target' ) );
 
 		return $a;

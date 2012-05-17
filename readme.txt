@@ -3,26 +3,28 @@ Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.0.0
 Tested up to: 3.3.2
-Stable tag: 1.21
+Stable tag: 1.30
 
-Open external links in a new window/tab, add "external" / "nofollow" to rel-attribute, set icon, XHTML strict, SEO friendly...
+Open external links in a new window or tab, add "nofollow", choose icon, SEO friendly options...
 
 == Description ==
 
-Set options for external links, like:
+Configure external links the way you want, with options like:
 
 = Features =
-* Set target for opening external links
-* Add "external" / "nofollow" to rel-attribute
-* Set title
-* Set icon
-* Add class(es)
+
+* Open external links in new window or tab
+* Add "nofollow" and "external" to rel-attribute
+* Choose out of 20 icons
+* Add additional classes for custom styling
 * Set no-icon class
+* Set title attribute
 * XHTML strict and SEO friendly
 
 This latest version requires PHP 5.2+ and WP 3.0+.
 
 == Installation ==
+
 1. Go to `Plugins` in the Admin menu
 1. Click on the button `Add new`
 1. Search for `WP External Links` and click 'Install Now' OR click on the `upload` link to upload `wp-external-links.zip`
@@ -45,6 +47,10 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.30 =
+* Re-arranged options in metaboxes
+* Added option for no icons on images
 
 = 1.21 =
 * Fixed phpQuery bugs (class already exists and loading stylesheet)
@@ -132,6 +138,10 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 * Internalization implemented (no language files yet)
 
 == Upgrade Notice ==
+
+= 1.30 =
+* Re-arranged options in metaboxes
+* Added option for no icons on images
 
 = 1.21 =
 * Fixed phpQuery bugs (class already exists and loading stylesheet)

@@ -43,8 +43,9 @@ class WP_Option_Forms_01 {
 		$this->name = sanitize_title_with_dashes( $name );
 
 		// set option names
-		foreach ( $options AS $option_name => $values )
+		foreach ( $options AS $option_name => $values ) {
 			$this->add_option( $option_name, $values );
+		}
 
 		// actions
 		add_action( 'wp_ajax_wpof_update_options', array( $this, 'call_wp_ajax' ) );
@@ -56,8 +57,9 @@ class WP_Option_Forms_01 {
 	 */
 	public function call_admin_menu() {
 		// Register settings
-		foreach ( $this->options AS $option_name => $values )
+		foreach ( $this->options AS $option_name => $values ) {
 			register_setting( $option_name, $option_name );
+		}
 
 		// script
 		wp_enqueue_script( 'option-forms', plugins_url( 'wp-option-forms.js', __FILE__ ), array( 'jquery' ), '1.0' );
@@ -303,6 +305,10 @@ class WP_Option_Forms_01 {
 			$option = $this->name . '-' . $option_name;
 		}
 
+		if (!isset($this->options[ $option ])) {
+			return $default_value;
+		}
+
 		$values = $this->options[ $option ];
 
 		return ( is_array( $values ) AND key_exists( $key, $values ) AND $values[ $key ] !== NULL ) ? $values[ $key ] : $default_value;
@@ -312,8 +318,9 @@ class WP_Option_Forms_01 {
 	 * Delete and unregister option
 	 */
 	public function delete_options() {
-		foreach ( $this->options AS $option_name => $values )
+		foreach ( $this->options AS $option_name => $values ) {
 			delete_option( $option_name );
+		}
 	}
 
 	/**
