@@ -546,7 +546,7 @@ final class Admin_External_Links {
 
 			if ( isset( $general[ 'target' ] ) ) $new_options[ 'main' ][ 'target' ] = $general[ 'target' ];
 			$new_options[ 'main' ][ 'use_js' ] = ( isset( $general[ 'use_js' ] ) ) ? $general[ 'use_js' ] : 0;
-			$new_options[ 'main' ][ 'filter_page' ] = ( isset( $general[ 'filter_whole_page' ] ) ) ? $general[ 'filter_whole_page' ] : 0;
+			$new_options[ 'main' ][ 'filter_page' ] = ( isset( $general[ 'filter_page' ] ) ) ? $general[ 'filter_page' ] : 0;
 			$new_options[ 'main' ][ 'filter_posts' ] = ( isset( $general[ 'filter_posts' ] ) ) ? $general[ 'filter_posts' ] : 0;
 			$new_options[ 'main' ][ 'filter_comments' ] = ( isset( $general[ 'filter_comments' ] ) ) ? $general[ 'filter_comments' ] : 0;
 			$new_options[ 'main' ][ 'filter_widgets' ] = ( isset( $general[ 'filter_widgets' ] ) ) ? $general[ 'filter_widgets' ] : 0;
