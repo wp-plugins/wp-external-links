@@ -142,6 +142,10 @@ class WP_Option_Forms_01 {
 			$html .= wp_nonce_field( 'wpof_update_options', 'wpof-nonce', FALSE, FALSE );
 			$html .= '<input type="hidden" name="action" value="wpof_update_options" />';
 			$html .= '<input type="hidden" name="ajax_option_name" value="'. $this->current_option .'" />';
+
+			// instead of using settings_fields();
+			$html .= '<input type="hidden" name="option_page" value="' . esc_attr( $this->current_option ) . '" />';
+			$html .= wp_nonce_field( $this->current_option . '-options', '_wpnonce', TRUE, FALSE );
 		} else {
 			// instead of using settings_fields();
 			$html .= '<input type="hidden" name="option_page" value="' . esc_attr( $this->current_option ) . '" />';

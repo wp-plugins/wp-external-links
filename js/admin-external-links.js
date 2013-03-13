@@ -1,4 +1,4 @@
-/* Admin External Links */
+/* WP External Links Plugin - Admin */
 jQuery(function( $ ){
 
 	// option filter page

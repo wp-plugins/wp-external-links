@@ -230,11 +230,11 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 
 		// set rel="external" (when not already set)
 		if ( $this->get_opt( 'external' ) )
-			$this->add_attr_value( &$attrs, 'rel', 'external' );
+			$this->add_attr_value( $attrs, 'rel', 'external' );
 
 		// set rel="nofollow" when doesn't have "follow" (or already "nofollow")
 		if ( $this->get_opt( 'nofollow' ) AND strpos( $rel, 'follow' ) === FALSE )
-			$this->add_attr_value( &$attrs, 'rel', 'nofollow' );
+			$this->add_attr_value( $attrs, 'rel', 'nofollow' );
 
 		// set title
 		$title = $this->get_opt( 'title' );
@@ -243,7 +243,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 		// set user-defined class
 		$class = $this->get_opt( 'class_name' );
 		if ( $class )
-			$this->add_attr_value( &$attrs, 'class', $class );
+			$this->add_attr_value( $attrs, 'class', $class );
 
 		// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found or content contains image
 		if ( $this->get_opt( 'icon' ) > 0
@@ -251,7 +251,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 					AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE
 					AND !( $this->get_opt( 'image_no_icon' ) AND (bool) preg_match( '/<img([^>]*)>/is', $matches[ 2 ] )) ){
 			$icon_class = 'ext-icon-'. $this->get_opt( 'icon', 'style' );
-			$this->add_attr_value( &$attrs, 'class', $icon_class );
+			$this->add_attr_value( $attrs, 'class', $icon_class );
 		}
 
 		// set target
@@ -287,7 +287,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 	 * @param string $default  Optional, default NULL which means tje attribute will be removed when (new) value is empty
 	 * @return New value
 	 */
-	private function add_attr_value( $attrs, $attr_name, $value, $default = NULL ) {
+	private function add_attr_value( &$attrs, $attr_name, $value, $default = NULL ) {
 		if ( key_exists( $attr_name, $attrs ) )
 			$old_value = $attrs[ $attr_name ];
 
