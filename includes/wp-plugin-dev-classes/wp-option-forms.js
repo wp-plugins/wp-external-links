@@ -40,6 +40,9 @@ jQuery(function ($) {
 
 			// hide ajax loader
 			$form.find('.ajax-feedback').css('visibility', 'hidden');
+
+			// trigger ajax_saved_options
+			$form.trigger('ajax_saved_options', [result]);
 		});
 	};
 

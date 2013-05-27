@@ -1,27 +1,37 @@
 === WP External Links ===
 Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
-Requires at least: 3.0.0
+Requires at least: 3.2.0
 Tested up to: 3.5.1
-Stable tag: 1.31
+Stable tag: 1.40
 
-Open external links in a new window or tab, add "nofollow", choose icon, SEO friendly options...
+Open external links in a new window or tab, adding "nofollow", set link icon, styling, SEO friendly options and more. Easy install and go.
 
 == Description ==
 
-Configure external links the way you want, with options like:
+Configure settings for all external links on your site.
 
 = Features =
-
 * Open external links in new window or tab
-* Add "nofollow" and "external" to rel-attribute
-* Choose out of 20 icons
-* Add additional classes for custom styling
+* Add "nofollow"
+* Set link title
+* Set link icon
+* Set classes (for your own styling)
 * Set no-icon class
-* Set title attribute
-* XHTML strict and SEO friendly
+* SEO friendly
 
-This latest version requires PHP 5.2+ and WP 3.0+.
+= Easy to use =
+After activating the plugin all options are already set to make your external links SEO friendly. Optionally you can also set the target for opening in a new window or tab or styling options, like adding an icon.
+
+[See more documentation](http://wordpress.org/extend/plugins/wp-external-links/other_notes/).
+
+= Support =
+This plugin has the same [requirements](http://wordpress.org/about/requirements/) as WordPress.
+If you are experiencing any problems, just take a look at the [FAQ](http://wordpress.org/extend/plugins/wp-external-links/faq/) or report it in the [support section](http://wordpress.org/support/plugin/wp-external-links). You can also send me a mail with [this contactform](http://www.freelancephp.net/contact/).
+
+= Like this plugin? =
+This plugin is free and does not need any donations. You could show your appreciation by rating this plugin and/or [posting a comment](http://www.freelancephp.net/wp-external-links-plugin/) on my blog.
+
 
 == Installation ==
 
@@ -39,7 +49,25 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 1. Link Icon on the Site
 1. Admin Settings Page
 
-== Other notes ==
+== Documentation ==
+
+After activating the plugin all options are already set to make your external links SEO friendly. Optionally you can also set the target for opening in a new window or tab or styling options, like adding an icon.
+
+= Action hook =
+The plugin also has a hook when ready, f.e. to add extra filters:
+`function extra_filters($filter_callback, $object) {
+	add_filter('some_filter', $filter_callback);
+}
+add_action('wpel_ready', 'extra_filters');`
+
+= Filter hook =
+The wpel_external_link filter gives you the possibility to manipulate output of the mailto created by the plugin. F.e. make all external links bold:
+`public function special_external_link($original_link, $created_link, $label, $attrs = array()) {
+	return '<b>'. $created_link .'</b>';
+}
+add_filter('wpel_external_link', 'special_external_link', 10, 4);`
+
+Now all external links will be processed and wrapped around a `<b>`-tag.
 
 = Credits =
 * [jQuery Tipsy Plugin](http://plugins.jquery.com/project/tipsy) made by [Jason Frame](http://onehackoranother.com/)
@@ -47,6 +75,14 @@ This latest version requires PHP 5.2+ and WP 3.0+.
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.40 =
+* Added action hook wpel_ready
+* Added filter hook wpel_external_link
+* Added output flush on wp_footer
+* Fixed Bug: spaces before url in href-attribute not recognized as external link
+* Fixed Bug: external links not processed (regexpr tag conflict starting with an a, like <aside> or <article>)
+* Cosmetic changes: added "Admin Settings", replaced help icon, restyled tooltip texts, removed "About this plugin" box
 
 = 1.31 =
 * Fixed passing arguments by reference using & (deprecated for PHP 5.4+)

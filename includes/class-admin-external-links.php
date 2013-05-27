@@ -84,6 +84,7 @@ final class Admin_External_Links {
 			$this->meta_box_page->init(
 				// settings
 				array(
+					'page_title' => $this->__( 'WP External Links' ),
 					'menu_title' => $this->__( 'External Links' ),
 					'page_slug' => strtolower( WP_EXTERNAL_LINKS_KEY ),
 					'add_page_method' => ( ! empty( $menu_pos ) AND $menu_pos != 'admin.php' ) ? 'add_submenu_page' : 'add_menu_page',
@@ -135,7 +136,7 @@ final class Admin_External_Links {
 	public function call_load_meta_box( $meta_box ) {
 		// add filters
 		$meta_box->add_title_filter( array( $this, 'call_page_title' ) )
-							->add_screen_settings_filter( array( $this, 'call_screen_settings' ) )
+//							->add_screen_settings_filter( array( $this, 'call_screen_settings' ) )
 							->add_contextual_help_filter( array( $this, 'call_contextual_help' ) );
 
 		// add meta boxes
@@ -144,22 +145,22 @@ final class Admin_External_Links {
 							->add_meta_box( $this->__( 'SEO Settings' ), array( $this, 'call_box_seo_settings' ), 1 )
 							->add_meta_box( $this->__( 'Style Settings' ), array( $this, 'call_box_style_settings' ), 1 )
 							->add_meta_box( $this->__( 'Extra Settings' ), array( $this, 'call_box_extra_settings' ), 1 )
-							->add_meta_box( $this->__( 'About this Plugin' ), array( $this, 'call_box_about' ), 2 )
+							->add_meta_box( $this->__( 'Admin Settings' ), array( $this, 'call_box_admin_settings' ), 1 )
+							//->add_meta_box( $this->__( 'About this Plugin' ), array( $this, 'call_box_about' ), 2 )
 							->add_meta_box( $this->__( 'Other Plugins' ), array( $this, 'call_box_other_plugins' ), 2 );
 
 		// stylesheets
-		wp_enqueue_style( 'jquery-tipsy', plugins_url( 'css/tipsy.css', WP_EXTERNAL_LINKS_FILE ), FALSE, WP_EXTERNAL_LINKS_VERSION );
+		wp_enqueue_style( 'wp-external-links', plugins_url( 'css/wp-external-links.css', WP_EXTERNAL_LINKS_FILE ), FALSE, WP_EXTERNAL_LINKS_VERSION );
+		wp_enqueue_style( 'admin-wp-external-links', plugins_url( 'css/admin-wp-external-links.css', WP_EXTERNAL_LINKS_FILE ), FALSE, WP_EXTERNAL_LINKS_VERSION );
 
 		// scripts
-		wp_enqueue_script( 'jquery-tipsy', plugins_url( '/js/jquery.tipsy.js', WP_EXTERNAL_LINKS_FILE ), array( 'jquery' ), WP_EXTERNAL_LINKS_VERSION );
-		wp_enqueue_script( 'admin-external-links', plugins_url( '/js/admin-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'postbox', 'option-forms' ), WP_EXTERNAL_LINKS_VERSION );
+		wp_enqueue_script( 'admin-wp-external-links', plugins_url( '/js/admin-wp-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'postbox', 'option-forms' ), WP_EXTERNAL_LINKS_VERSION );
 	}
 
 	/**
 	 * Screen settings
 	 * @param string $content
 	 * @return string
-	 */
 	public function call_screen_settings( $content ) {
 		$content .= '<h5>'. $this->__( 'Menu Setting' ) .'</h5>' . "\n";
 		$content .= '<div class="extra-prfs">' . "\n";
@@ -183,6 +184,7 @@ final class Admin_External_Links {
 
 		return $content;
 	}
+	 */
 
 	/**
 	 * Contextual_help (callback)
@@ -192,9 +194,6 @@ final class Admin_External_Links {
 	public function call_contextual_help( $content ) {
 		$help = '';
 		$help .= $this->meta_box_page->get_ob_callback( array( $this, 'call_box_about' ) );
-		$help .= $this->hr();
-		$help .= '<h4><img src="'. plugins_url( 'images/icon-wp-16.gif', WP_EXTERNAL_LINKS_FILE ) .'" width="16" height="16" /> '
-				. $this->__( 'WordPress' ) .'</h4>';
 		return $help . $content;
 	}
 
@@ -205,7 +204,7 @@ final class Admin_External_Links {
 	public function call_page_title( $title ) {
 		// when updated set the update message
 		if ( isset($_GET[ 'settings-updated' ]) && $_GET[ 'settings-updated' ] == 'true' ) {
-			$title .= '<div class="updated settings-error" id="setting-error-settings_updated" style="display:none">'
+			$title .= '<div class="updated settings-error" id="setting-error-settings_updated">'
 				. '<p><strong>' . __( 'Settings saved.' ) .'</strong></p>'
 				. '</div>';
 		}
@@ -251,7 +250,7 @@ final class Admin_External_Links {
 				</th>
 				<td>
 					<label><?php echo $this->form->checkbox( 'use_js', 1, array( 'class' => 'field_use_js' ) ); ?>
-					<span><?php $this->_e( 'Use JavaScript for opening links (valid XHTML Strict).' ) ?></span>
+					<span><?php $this->_e( 'Use JavaScript for opening links' ) ?></span> <span class="description"><?php $this->_e( '(valid xhtml strict)' ) ?></span>
 				</td>
 			</tr>
 			</table>
@@ -265,7 +264,7 @@ final class Admin_External_Links {
 						<?php echo $this->tooltip_help( 'Choose contents for applying settings to external links.' ) ?></th>
 				<td>
 					<label><?php echo $this->form->checkbox( 'filter_page', 1 ); ?>
-					<span><?php $this->_e( 'All contents' ) ?></span></label>
+					<span><?php $this->_e( 'All contents' ) ?></span> <span class="description"><?php $this->_e('(the whole <code>&lt;body&gt;</code>)') ?></span></label>
 					<br/>&nbsp;&nbsp;<label><?php echo $this->form->checkbox( 'filter_posts', 1 ); ?>
 							<span><?php $this->_e( 'Post contents' ) ?></span></label>
 					<br/>&nbsp;&nbsp;<label><?php echo $this->form->checkbox( 'filter_comments', 1 ); ?>
@@ -350,7 +349,7 @@ final class Admin_External_Links {
 							<br/>
 							<label title="<?php echo sprintf( $this->__( 'Icon %1$s: choose this icon to show for all external links or add the class \'ext-icon-%1$s\' to a specific link.' ), $x ) ?>">
 							<?php echo $this->form->radio( 'icon', $x ); ?>
-							<img src="<?php echo plugins_url( 'images/external-'. $x .'.png', WP_EXTERNAL_LINKS_FILE ) ?>" /></label>
+							<span class="ext-icon-<?php echo $x ?>" /><?php echo $x ?>) </span></label>
 							<?php if ( $x % 5 == 0 ): ?>
 						</div>
 						<div style="width:15%;float:left">
@@ -423,12 +422,43 @@ final class Admin_External_Links {
 						<span class="description"><?php _e( 'Define selection by using CSS selectors, f.e.: <code>.excl-ext-link, .entry-title, #comments-title</code> (look <a href="http://code.google.com/p/phpquery/wiki/Selectors" target="_blank">here</a> for available selectors).' ) ?></span></label>
 				</td>
 			</tr>
-			<tr>
-				<th style="width:250px;"><?php $this->_e( 'Plugin menu position' ) ?>
-					<?php echo $this->tooltip_help( 'Change the menu position of this plugin in "Screen Options".' ) ?></th>
-				<td><label><a id="admin_menu_position" href="#"><?php _e( 'Change menu position' ) ?></a></label>
-				</td>
-			</tr>
+			</table>
+		</fieldset>
+<?php
+		echo $this->form->submit();
+		echo $this->form->close_form();
+	}
+
+	/**
+	 * Meta Box: Extra Settings
+	 */
+	public function call_box_admin_settings() {
+		echo $this->form->set_current_option( 'screen' )->open_form();
+?>
+		<fieldset class="options">
+			<table class="form-table">
+				<tr>
+					<th><?php $this->_e('Admin menu position') ?>
+						<?php echo $this->tooltip_help( 'Change the menu position of this plugin in "Screen Options".' ) ?></th>
+					<td><label>
+					<?php
+						echo $this->form->select( 'menu_position', array(
+							'admin.php' => 'Main menu',
+							'index.php' => $this->__( 'Subitem of Dashboard' ),
+							'edit.php' => $this->__( 'Subitem of Posts' ),
+							'upload.php' => $this->__( 'Subitem of Media' ),
+							'link-manager.php' => $this->__( 'Subitem of Links' ),
+							'edit.php?post_type=page' => $this->__( 'Subitem of Pages' ),
+							'edit-comments.php' => $this->__( 'Subitem of Comments' ),
+							'themes.php' => $this->__( 'Subitem of Appearance' ),
+							'plugins.php' => $this->__( 'Subitem of Plugins' ),
+							'users.php' => $this->__( 'Subitem of Users' ),
+							'tools.php' => $this->__( 'Subitem of Tools' ),
+							'options-general.php' => $this->__( 'Subitem of Settings' ),
+						));
+					?>
+					</label></td>
+				</tr>
 			</table>
 		</fieldset>
 <?php
@@ -578,6 +608,19 @@ final class Admin_External_Links {
 	}
 
 	/**
+	 * Method for test purpuses
+	 */
+	public function __options($values = null) {
+		if (class_exists('Test_WP_Mailto_Links') && constant('WP_DEBUG') === true) {
+			if ($values !== null) {
+				$this->set_options($values);
+			}
+
+			return $this->options;
+		}
+	}
+
+	/**
 	 * Uninstall callback
 	 */
 	static public function call_uninstall() {
@@ -593,10 +636,8 @@ final class Admin_External_Links {
 		$text = $this->__( $text );
 		$text = htmlentities( $text );
 
-		$html = '';
-		$html .= '<a href="#" class="tooltip-help" title="'. $text .'">';
-		$html .= '<img alt="" title="" src="'. plugins_url( '/images/help-icon.png', WP_EXTERNAL_LINKS_FILE ) .'" />';
-		$html .= '</a>';
+		$html = '<a href="#" class="tooltip-help" title="'. $text .'">[?]</a>';
+		//$html = '<img alt="" title="" src="'. plugins_url( '/images/help-icon.png', WP_EXTERNAL_LINKS_FILE ) .'" />';
 		return $html;
 	}
 
@@ -627,3 +668,5 @@ final class Admin_External_Links {
 } // End Admin_External_Links Class
 
 endif;
+
+/* ommit PHP closing tag, to prevent unwanted whitespace at the end of the parts generated by the included files */
