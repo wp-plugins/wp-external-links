@@ -3,7 +3,7 @@ Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.2.0
 Tested up to: 3.5.1
-Stable tag: 1.40
+Stable tag: 1.41
 
 Open external links in a new window or tab, adding "nofollow", set link icon, styling, SEO friendly options and more. Easy install and go.
 
@@ -61,13 +61,18 @@ The plugin also has a hook when ready, f.e. to add extra filters:
 add_action('wpel_ready', 'extra_filters');`
 
 = Filter hook =
-The wpel_external_link filter gives you the possibility to manipulate output of the mailto created by the plugin. F.e. make all external links bold:
-`public function special_external_link($original_link, $created_link, $label, $attrs = array()) {
+The wpel_external_link filter gives you the possibility to manipulate output of the mailto created by the plugin, like:
+`function special_external_link($created_link, $original_link, $label, $attrs = array()) {
+	// skip links that contain the class "not-external"
+	if (isset($attrs['class']) && strpos($attrs['class'], 'not-external') !== false) {
+		return $original_link;
+	}
+
 	return '<b>'. $created_link .'</b>';
 }
 add_filter('wpel_external_link', 'special_external_link', 10, 4);`
 
-Now all external links will be processed and wrapped around a `<b>`-tag.
+Now all external links will be processed and wrapped around a `<b>`-tag. And links containing the class "not-external" will not be processed by the plugin at all (and stay the way they are).
 
 = Credits =
 * [jQuery Tipsy Plugin](http://plugins.jquery.com/project/tipsy) made by [Jason Frame](http://onehackoranother.com/)
@@ -75,6 +80,9 @@ Now all external links will be processed and wrapped around a `<b>`-tag.
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.41 =
+* Fixed Bug: wpmel_external_link filter hook was not working correctly
 
 = 1.40 =
 * Added action hook wpel_ready

@@ -293,7 +293,7 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 		$link .= '>'. $matches[ 2 ] .'</a>';
 
 		// filter
-		$link = apply_filters('wpel_external_link', $link, $matches[ 2 ], $email, $attrs);
+		$link = apply_filters('wpel_external_link', $link, $matches[ 0 ], $matches[ 2 ], $attrs);
 
 		return $link;
 	}
@@ -348,8 +348,11 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 
 		// set simple <head> without attributes
 		preg_match( $regexp_head, $content, $matches );
-		$original_head = $matches[ 0 ];
-		$content = str_replace( $original_head, $clean_head, $content );
+
+		if( count( $matches ) > 0 ) {
+			$original_head = $matches[ 0 ];
+			$content = str_replace( $original_head, $clean_head, $content );
+		}
 
 		//phpQuery::$debug = true;
 
@@ -408,8 +411,10 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 		// get document content
 		$content = (string) $doc;
 
-		// recover original <head> with attributes
-		$content = str_replace( $clean_head, $original_head, $content );
+		if( isset( $original_head ) ) {
+			// recover original <head> with attributes
+			$content = str_replace( $clean_head, $original_head, $content );
+		}
 
 		return $content;
 	}

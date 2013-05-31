@@ -136,7 +136,6 @@ final class Admin_External_Links {
 	public function call_load_meta_box( $meta_box ) {
 		// add filters
 		$meta_box->add_title_filter( array( $this, 'call_page_title' ) )
-//							->add_screen_settings_filter( array( $this, 'call_screen_settings' ) )
 							->add_contextual_help_filter( array( $this, 'call_contextual_help' ) );
 
 		// add meta boxes
@@ -156,35 +155,6 @@ final class Admin_External_Links {
 		// scripts
 		wp_enqueue_script( 'admin-wp-external-links', plugins_url( '/js/admin-wp-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'postbox', 'option-forms' ), WP_EXTERNAL_LINKS_VERSION );
 	}
-
-	/**
-	 * Screen settings
-	 * @param string $content
-	 * @return string
-	public function call_screen_settings( $content ) {
-		$content .= '<h5>'. $this->__( 'Menu Setting' ) .'</h5>' . "\n";
-		$content .= '<div class="extra-prfs">' . "\n";
-		$content .= $this->__( 'Admin menu position' ) . ': ' . "\n";
-		$content .= $this->form->open_screen_option( 'screen', 'menu_position' );
-		$content .= $this->form->select( 'menu_position', array(
-			'admin.php' => 'Main menu',
-			'index.php' => $this->__( 'Subitem of Dashboard' ),
-			'edit.php' => $this->__( 'Subitem of Posts' ),
-			'upload.php' => $this->__( 'Subitem of Media' ),
-			'link-manager.php' => $this->__( 'Subitem of Links' ),
-			'edit.php?post_type=page' => $this->__( 'Subitem of Pages' ),
-			'edit-comments.php' => $this->__( 'Subitem of Comments' ),
-			'themes.php' => $this->__( 'Subitem of Appearance' ),
-			'plugins.php' => $this->__( 'Subitem of Plugins' ),
-			'users.php' => $this->__( 'Subitem of Users' ),
-			'tools.php' => $this->__( 'Subitem of Tools' ),
-			'options-general.php' => $this->__( 'Subitem of Settings' ),
-		)) . "\n";
-		$content .= '</div>' . "\n";
-
-		return $content;
-	}
-	 */
 
 	/**
 	 * Contextual_help (callback)
@@ -637,7 +607,6 @@ final class Admin_External_Links {
 		$text = htmlentities( $text );
 
 		$html = '<a href="#" class="tooltip-help" title="'. $text .'">[?]</a>';
-		//$html = '<img alt="" title="" src="'. plugins_url( '/images/help-icon.png', WP_EXTERNAL_LINKS_FILE ) .'" />';
 		return $html;
 	}
 
