@@ -121,6 +121,20 @@ jQuery(function ($) {
 		})
 		.change();
 
+	// option use js
+	$( 'input#use_js' )
+		.change(function(){
+			var $i = $( 'input#load_in_footer' );
+
+			if ( $( this ).attr( 'checked' ) ) {
+				$i.attr( 'disabled', false );
+			} else {
+				$i.attr( 'disabled', true )
+					.attr( 'checked', false );
+			}
+		})
+		.change();
+
 	// option filter_excl_sel
 	$( 'input#phpquery' )
 		.change(function(){

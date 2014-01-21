@@ -1,9 +1,9 @@
-=== WP External Links ===
+=== WP External Links - SEO Optimalization ===
 Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
-Requires at least: 3.2.0
-Tested up to: 3.5.1
-Stable tag: 1.41
+Requires at least: 3.4.0
+Tested up to: 3.8.0
+Stable tag: 1.50
 
 Open external links in a new window or tab, adding "nofollow", set link icon, styling, SEO friendly options and more. Easy install and go.
 
@@ -30,7 +30,7 @@ This plugin has the same [requirements](http://wordpress.org/about/requirements/
 If you are experiencing any problems, just take a look at the [FAQ](http://wordpress.org/extend/plugins/wp-external-links/faq/) or report it in the [support section](http://wordpress.org/support/plugin/wp-external-links). You can also send me a mail with [this contactform](http://www.freelancephp.net/contact/).
 
 = Like this plugin? =
-This plugin is free and does not need any donations. You could show your appreciation by rating this plugin and/or [posting a comment](http://www.freelancephp.net/wp-external-links-plugin/) on my blog.
+Please [rate this plugin](http://wordpress.org/support/view/plugin-reviews/wp-external-links-plugin) or [post a comment](http://www.freelancephp.net/wp-external-links-plugin/) on my blog.
 
 
 == Installation ==
@@ -80,6 +80,13 @@ Now all external links will be processed and wrapped around a `<b>`-tag. And lin
 * [Icon](http://findicons.com/icon/164579/link_go?id=427009) made by [FatCow Web Hosting](http://www.fatcow.com/)
 
 == Changelog ==
+
+= 1.50 =
+* Removed stylesheet file to save extra request
+* Added option for loading js file in wp_footer
+* Fixed bug with data-* attributes
+* Fixed bug url's with hash at the end
+* Fixed PHP errors
 
 = 1.41 =
 * Fixed Bug: wpmel_external_link filter hook was not working correctly

@@ -28,6 +28,7 @@ final class Admin_External_Links {
 			'external' => 1,
 			'nofollow' => 1,
 			'title' => '%title%',
+			'load_in_footer' => 1,
 		),
 		'style' => array(
 			'class_name' => 'ext-link',
@@ -215,21 +216,6 @@ final class Admin_External_Links {
 				</td>
 			</tr>
 			<tr>
-				<th><?php $this->_e( 'Use JavaScript method' ) ?>
-					<?php echo $this->tooltip_help( 'Enable this option to use the JavaScript method for opening links, which prevents adding target attribute in the HTML code.' ) ?></label>
-				</th>
-				<td>
-					<label><?php echo $this->form->checkbox( 'use_js', 1, array( 'class' => 'field_use_js' ) ); ?>
-					<span><?php $this->_e( 'Use JavaScript for opening links' ) ?></span> <span class="description"><?php $this->_e( '(valid xhtml strict)' ) ?></span>
-				</td>
-			</tr>
-			</table>
-
-			<?php echo $this->hr(); ?>
-
-			<h4><?php $this->_e( 'Apply on' ) ?></h4>
-			<table class="form-table">
-			<tr>
 				<th style="width:250px;"><?php $this->_e( 'Apply plugin settings on...' ) ?>
 						<?php echo $this->tooltip_help( 'Choose contents for applying settings to external links.' ) ?></th>
 				<td>
@@ -292,6 +278,18 @@ final class Admin_External_Links {
 				<td><label><?php echo $this->form->text( 'title' ); ?>
 					<br/><span class="description"><?php _e( 'Use <code>%title%</code> for the original title value.' ) ?></span></label></td>
 			</tr>
+			<tr>
+				<th><?php $this->_e( 'Use JavaScript method' ) ?>
+					<?php echo $this->tooltip_help( 'Enable this option to use the JavaScript method for opening links, which prevents adding target attribute in the HTML code.' ) ?></label>
+				</th>
+				<td>
+					<label><?php echo $this->form->checkbox( 'use_js', 1, array( 'class' => 'field_use_js' ) ); ?>
+					<span><?php $this->_e( 'Use JavaScript for opening links' ) ?></span> <span class="description"><?php $this->_e( '(valid xhtml strict)' ) ?></span>
+                    <br/>
+					&nbsp;&nbsp;<label><?php echo $this->form->checkbox( 'load_in_footer', 1, array( 'class' => 'load_in_footer' ) ); ?>
+					<span><?php $this->_e( 'Load JS file in footer' ) ?></span>
+				</td>
+			</tr>
 			</table>
 		</fieldset>
 <?php
@@ -319,7 +317,7 @@ final class Admin_External_Links {
 							<br/>
 							<label title="<?php echo sprintf( $this->__( 'Icon %1$s: choose this icon to show for all external links or add the class \'ext-icon-%1$s\' to a specific link.' ), $x ) ?>">
 							<?php echo $this->form->radio( 'icon', $x ); ?>
-							<span class="ext-icon-<?php echo $x ?>" /><?php echo $x ?>) </span></label>
+                            <img src="<?php echo plugins_url('images/ext-icons/ext-icon-'. $x .'.png', WP_EXTERNAL_LINKS_FILE)  ?>" /></label>
 							<?php if ( $x % 5 == 0 ): ?>
 						</div>
 						<div style="width:15%;float:left">
@@ -606,7 +604,7 @@ final class Admin_External_Links {
 		$text = $this->__( $text );
 		$text = htmlentities( $text );
 
-		$html = '<a href="#" class="tooltip-help" title="'. $text .'">[?]</a>';
+		$html = '<a href="#" class="tooltip-help" title="'. $text .'"><sup>(?)</sup></a>';
 		return $html;
 	}
 

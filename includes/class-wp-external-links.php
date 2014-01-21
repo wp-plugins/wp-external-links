@@ -56,20 +56,12 @@ final class WP_External_Links {
 	 */
 	public function call_wp() {
 		if ( ! is_admin() && ! is_feed() ) {
-			// Include phpQuery
-			if ( ! class_exists( 'phpQuery' ) ) {
-				require_once( 'phpQuery.php' );
-			}
-
 			// add wp_head for setting js vars and css style
 			add_action( 'wp_head', array( $this, 'call_wp_head' ) );
 
-			// add stylesheet
-			wp_enqueue_style( 'wp-external-links', plugins_url( 'css/wp-external-links.css', WP_EXTERNAL_LINKS_FILE ), FALSE, WP_EXTERNAL_LINKS_VERSION );
-
 			// set js file
 			if ( $this->get_opt( 'use_js' ) )
-				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/wp-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'jquery' ), WP_EXTERNAL_LINKS_VERSION );
+				wp_enqueue_script( 'wp-external-links', plugins_url( 'js/wp-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'jquery' ), WP_EXTERNAL_LINKS_VERSION, (bool) $this->get_opt( 'load_in_footer' ) );
 
 			// filters
 			if ( $this->get_opt( 'filter_page' ) ) {
@@ -145,6 +137,18 @@ final class WP_External_Links {
 		$ignored = array_map( 'strtolower', $ignored );
 		$this->ignored = $ignored;
 
+        $icon = $this->get_opt('icon');
+
+        if ($icon) {
+            $padding = ($icon < 20) ? 15 : 12;
+?>
+<style type="text/css" media="screen">
+/* WP External Links Plugin */
+.ext-icon-<?php echo $icon ?> { background:url(<?php echo plugins_url('/images/ext-icons/ext-icon-' . $icon . '.png', WP_EXTERNAL_LINKS_FILE) ?>) no-repeat 100% 50%; padding-right:<?php echo $padding ?>px; }';
+</style>
+<?php
+        }
+
 		if ( $this->get_opt( 'use_js' ) AND $this->get_opt( 'target' ) != '_none' ):
 			// set exclude class
 			$excludeClass = ( $this->get_opt( 'no_icon_same_window' ) AND $this->get_opt( 'no_icon_class' ) )
@@ -171,6 +175,11 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 		}
 
 		if ( $this->get_opt( 'phpquery' ) ) {
+			// Include phpQuery
+			if ( ! class_exists( 'phpQuery' ) ) {
+				require_once( 'phpQuery.php' );
+			}
+
 			return $this->filter_phpquery( $content );
 		} else {
 			return $this->filter( $content );
@@ -224,6 +233,91 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 		return $content;
 	}
 
+    /**
+     * Parse an attributes string into an array. If the string starts with a tag,
+     * then the attributes on the first tag are parsed. This parses via a manual
+     * loop and is designed to be safer than using DOMDocument.
+     *
+     * @param    string|*   $attrs
+     * @return   array
+     *
+     * @example  parse_attrs( 'src="example.jpg" alt="example"' )
+     * @example  parse_attrs( '<img src="example.jpg" alt="example">' )
+     * @example  parse_attrs( '<a href="example"></a>' )
+     * @example  parse_attrs( '<a href="example">' )
+     *
+     * @link http://dev.airve.com/demo/speed_tests/php/parse_attrs.php
+     */
+    private function parse_attrs ($attrs) {
+        if ( ! is_scalar($attrs) )
+            return (array) $attrs;
+
+        $attrs = str_split( trim($attrs) );
+
+        if ( '<' === $attrs[0] ) # looks like a tag so strip the tagname
+            while ( $attrs && ! ctype_space($attrs[0]) && $attrs[0] !== '>' )
+                array_shift($attrs);
+
+        $arr = array(); # output
+        $name = '';     # for the current attr being parsed
+        $value = '';    # for the current attr being parsed
+        $mode = 0;      # whether current char is part of the name (-), the value (+), or neither (0)
+        $stop = false;  # delimiter for the current $value being parsed
+        $space = ' ';   # a single space
+
+        foreach ( $attrs as $j => $curr ) {
+
+            if ( $mode < 0 ) {# name
+                if ( '=' === $curr ) {
+                    $mode = 1;
+                    $stop = false;
+                } elseif ( '>' === $curr ) {
+                    '' === $name or $arr[ $name ] = $value;
+                    break;
+                } elseif ( ! ctype_space($curr) ) {
+                    if ( ctype_space( $attrs[ $j - 1 ] ) ) { # previous char
+                        '' === $name or $arr[ $name ] = '';   # previous name
+                        $name = $curr;                        # initiate new
+                    } else {
+                        $name .= $curr;
+                    }
+                }
+            } elseif ( $mode > 0 ) {# value
+                if ( $stop === false ) {
+                    if ( ! ctype_space($curr) ) {
+                        if ( '"' === $curr || "'" === $curr ) {
+                            $value = '';
+                            $stop = $curr;
+                        } else {
+                            $value = $curr;
+                            $stop = $space;
+                        }
+                    }
+                } elseif ( $stop === $space ? ctype_space($curr) : $curr === $stop ) {
+                    $arr[ $name ] = $value;
+                    $mode = 0;
+                    $name = $value = '';
+                } else {
+                    $value .= $curr;
+                }
+            } else {# neither
+
+                if ( '>' === $curr )
+                    break;
+                if ( ! ctype_space( $curr ) ) {
+                    # initiate
+                    $name = $curr;
+                    $mode = -1;
+                }
+            }
+        }
+
+        # incl the final pair if it was quoteless
+        '' === $name or $arr[ $name ] = $value;
+
+        return $arr;
+    }
+
 	/**
 	 * Make a clean <a> code (callback for regexp)
 	 * @param array $matches Result of a preg call in filter_content()
@@ -232,9 +326,10 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 	public function call_parse_link( $matches ) {
 		$attrs = $matches[ 1 ];
 		$attrs = stripslashes( $attrs );
-		$attrs = shortcode_parse_atts( $attrs );
+		$attrs = $this->parse_attrs( $attrs );
 
 		$rel = ( isset( $attrs[ 'rel' ] ) ) ? strtolower( $attrs[ 'rel' ] ) : '';
+
 		// href
 		$href = $attrs[ 'href' ];
 		$href = strtolower( $href );
@@ -306,14 +401,14 @@ var wpExtLinks = { baseUrl: '<?php echo get_bloginfo( 'wpurl' ) ?>', target: '<?
 	 * @param string $default  Optional, default NULL which means tje attribute will be removed when (new) value is empty
 	 * @return New value
 	 */
-	private function add_attr_value( &$attrs, $attr_name, $value, $default = NULL ) {
+	public function add_attr_value( &$attrs, $attr_name, $value, $default = NULL ) {
 		if ( key_exists( $attr_name, $attrs ) )
 			$old_value = $attrs[ $attr_name ];
 
 		if ( empty( $old_value ) )
 			$old_value = '';
 
-		$split = split( ' ', strtolower( $old_value ) );
+		$split = explode( ' ', strtolower( $old_value ) );
 
 		if ( in_array( $value, $split ) ) {
 			$value = $old_value;
