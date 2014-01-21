@@ -1,4 +1,4 @@
-=== WP External Links - SEO Optimalization ===
+=== WP External Links - SEO Optimization ===
 Contributors: freelancephp
 Tags: links, external, icon, target, _blank, _new, _none, rel, nofollow, new window, new tab, javascript, xhtml, seo
 Requires at least: 3.4.0
