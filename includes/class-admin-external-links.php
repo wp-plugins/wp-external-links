@@ -174,7 +174,7 @@ style;
 							->add_meta_box( $this->__( 'Other Plugins' ), array( $this, 'call_box_other_plugins' ), 2 );
 
 		// scripts
-		wp_enqueue_script( 'admin-wp-external-links', plugins_url( '/js/admin-wp-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'postbox' ), WP_EXTERNAL_LINKS_VERSION );
+		wp_enqueue_script( 'admin-wp-external-links', plugins_url( '/js/admin-wp-external-links.js', WP_EXTERNAL_LINKS_FILE ), array( 'jquery', 'postbox' ), WP_EXTERNAL_LINKS_VERSION );
 	}
 
 	/**
@@ -519,6 +519,7 @@ style;
 		// set new version
 		$meta[ 'version' ] = WP_EXTERNAL_LINKS_VERSION;
 		update_option( 'wp_external_links-meta', $meta );
+        $this->save_options['meta'] = $meta;
 
 		// check for upgrading saved options to v1.00
 		$old_options = get_option( 'WP_External_Links_options' );
@@ -549,12 +550,12 @@ style;
 		}
 
 		// upgrade to v1.20
-		$upgrade_main = get_option( 'wp_external_links-main' );
-
-		if ( ! isset( $upgrade_main[ 'ignore' ] ) ) {
-			$upgrade_main[ 'ignore' ] = $this->save_options[ 'main' ][ 'ignore' ];
-			update_option( 'wp_external_links-main', $upgrade_main );
-		}
+//		$upgrade_main = get_option( 'wp_external_links-main' );
+//
+//		if ( ! isset( $upgrade_main[ 'ignore' ] ) ) {
+//			$upgrade_main[ 'ignore' ] = $this->save_options[ 'main' ][ 'ignore' ];
+//			update_option( 'wp_external_links-main', $upgrade_main );
+//		}
 
 		// upgrade to v1.30
 		if ( WP_EXTERNAL_LINKS_VERSION == '1.30' ) {
