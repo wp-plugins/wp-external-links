@@ -185,10 +185,9 @@ final class WP_External_Links {
 	/**
 	 * Check if link is external
 	 * @param string $href
-	 * @param string $rel
 	 * @return boolean
 	 */
-	private function is_external( $href, $rel ) {
+	private function is_external( $href ) {
 		return ( isset( $href ) AND ( ( strpos( $href, strtolower( get_bloginfo( 'wpurl' ) ) ) === FALSE )
                                             AND ( substr( $href, 0, 7 ) == 'http://'
                                                     OR substr( $href, 0, 8 ) == 'https://'
@@ -341,7 +340,7 @@ final class WP_External_Links {
         }
 
         // checks
-        $is_external = $this->is_external( $href, $rel );
+        $is_external = $this->is_external( $href );
         $is_ignored = $this->is_ignored( $href );
         $has_rel_external =  (strpos( $rel, 'external' ) !== FALSE);
 
@@ -361,9 +360,20 @@ final class WP_External_Links {
 		if ( $this->get_opt( 'external' ) )
 			$this->add_attr_value( $attrs, 'rel', 'external' );
 
-		// set rel="nofollow" when doesn't have "follow" (or already "nofollow")
-		if ( $this->get_opt( 'nofollow' ) AND strpos( $rel, 'follow' ) === FALSE )
-			$this->add_attr_value( $attrs, 'rel', 'nofollow' );
+		// set rel="nofollow" 
+		if ( $this->get_opt( 'nofollow' ) ) {
+            $has_follow = (strpos( $rel, 'follow' ) !== FALSE);
+
+            // when doesn't have "follow" (or already "nofollow")
+            if (! $has_follow || $this->get_opt( 'overwrite_follow' )) {
+                if ($has_follow) {
+                    // remove "follow"
+                    //$attrs[ 'rel' ] = ;
+                }
+
+    			$this->add_attr_value( $attrs, 'rel', 'nofollow' );
+            }
+        }
 
 		// set title
 		$title_format = $this->get_opt( 'title' );
