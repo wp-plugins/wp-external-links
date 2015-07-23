@@ -175,16 +175,11 @@ final class WP_External_Links {
 			$content = preg_replace_callback( '/<script([^>]*)>(.*?)<\/script[^>]*>/is', array( $this, 'call_fix_js' ), $content );
 		}
 
-		if ( $this->get_opt( 'phpquery' ) ) {
-			// Include phpQuery
-			if ( ! class_exists( 'phpQuery' ) ) {
-				require_once( 'phpQuery.php' );
-			}
+		if ( $this->get_opt( 'filter_page' ) && $this->get_opt( 'ignore_selectors' ) ) {
+            $content = $this->set_ignored_by_selectors( $content );
+        }
 
-			return $this->filter_phpquery( $content );
-		} else {
-			return $this->filter( $content );
-		}
+        return $this->filter( $content );
 	}
 
 	/**
@@ -227,7 +222,7 @@ final class WP_External_Links {
      * @param string $href
      * @return boolean
      */
-    private function is_ignored( $href ) {
+    private function is_ignored_by_url( $href ) {
 		// check if this links should be ignored
 		for ( $x = 0, $count = count($this->ignored); $x < $count; $x++ ) {
 			if ( strrpos( $href, $this->ignored[ $x ] ) !== FALSE )
@@ -236,6 +231,47 @@ final class WP_External_Links {
 
         return FALSE;
     }
+
+	/**
+	 * Set ignored external links selections
+	 * @param string $content
+	 * @return string
+	 */
+	private function set_ignored_by_selectors( $content ) {
+        // Include phpQuery
+        if ( ! class_exists( 'phpQuery' ) ) {
+            require_once( 'phpQuery.php' );
+        }
+
+        try {
+            // set document
+            //phpQuery::$debug = true;
+            $doc = phpQuery::newDocument( $content );
+
+            $ignore_selectors = $this->get_opt( 'ignore_selectors' );
+
+            // set ignored by selectors
+            if ( ! empty( $ignore_selectors ) ) {
+                $excludes = $doc->find( $ignore_selectors );
+
+                // links containing selector
+                $excludes->filter( 'a' )->attr( 'data-wpel-ignored', 'true' );
+
+                // links as descendant of element containing selector
+                $excludes->find( 'a' )->attr( 'data-wpel-ignored', 'true' );
+            }
+
+            $doc = (string) $doc;
+        } catch (Exception $e) {
+            $doc = '';
+        }
+
+        if (empty($doc)) {
+            return $content;
+        }
+
+		return $doc;
+	}
 
 	/**
 	 * Filter content
@@ -348,12 +384,12 @@ final class WP_External_Links {
 	public function call_parse_link( $matches ) {
         $link = $matches[ 0 ];
         $label = $matches[ 2 ];
-        $created_link = $link;
 
         // parse attributes
-		$attrs = $matches[ 1 ];
-		$attrs = stripslashes( $attrs );
-		$attrs = $this->parse_attrs( $attrs );
+		$original_attrs = $matches[ 1 ];
+		$original_attrs = stripslashes( $original_attrs );
+		$original_attrs = $this->parse_attrs( $original_attrs );
+        $attrs = $original_attrs;
 
 		$rel = ( isset( $attrs[ 'rel' ] ) ) ? strtolower( $attrs[ 'rel' ] ) : '';
 
@@ -366,26 +402,27 @@ final class WP_External_Links {
             $href = '';
         }
 
-        // checks
-        $is_external = $this->is_external( $href );
-        $is_ignored = $this->is_ignored( $href );
-        $has_rel_external =  (strpos( $rel, 'external' ) !== FALSE);
-
 		// is an internal link?
         // rel=external will be threaded as external link
+        $is_external = $this->is_external( $href );
+        $has_rel_external =  (strpos( $rel, 'external' ) !== FALSE);
+
 		if ( ! $is_external && ! $has_rel_external) {
-    		return apply_filters('wpel_internal_link', $created_link, $label, $attrs);
+    		return apply_filters('wpel_internal_link', $link, $label, $attrs);
         }
 
         // is an ignored link?
-        // rel=external will be threaded as external link
-        if ( $is_ignored && ! $has_rel_external ) {
-    		return apply_filters('wpel_external_link', $created_link, $link, $label, $attrs, TRUE);
+        $is_ignored = $this->is_ignored_by_url( $href ) || isset($attrs['data-wpel-ignored']);
+
+        if ( $is_ignored ) {
+			self::add_attr_value( $attrs, 'data-wpel-ignored', 'true' );
+            $created_link = self::create_link($label, $attrs);
+    		return apply_filters('wpel_ignored_external_link', $created_link, $label, $attrs);
         }
 
 		// set rel="external" (when not already set)
 		if ( $this->get_opt( 'external' ) )
-			$this->add_attr_value( $attrs, 'rel', 'external' );
+			self::add_attr_value( $attrs, 'rel', 'external' );
 
 		// set rel="nofollow" 
 		if ( $this->get_opt( 'nofollow' ) ) {
@@ -398,7 +435,7 @@ final class WP_External_Links {
                     //$attrs[ 'rel' ] = ;
                 }
 
-    			$this->add_attr_value( $attrs, 'rel', 'nofollow' );
+    			self::add_attr_value( $attrs, 'rel', 'nofollow' );
             }
         }
 
@@ -410,7 +447,7 @@ final class WP_External_Links {
 		// set user-defined class
 		$class = $this->get_opt( 'class_name' );
 		if ( $class )
-			$this->add_attr_value( $attrs, 'class', $class );
+			self::add_attr_value( $attrs, 'class', $class );
 
 		// set icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found or content contains image
 		if ( $this->get_opt( 'icon' ) > 0
@@ -418,7 +455,7 @@ final class WP_External_Links {
 					AND strpos( $attrs[ 'class' ], 'ext-icon-' ) === FALSE
 					AND !( $this->get_opt( 'image_no_icon' ) AND (bool) preg_match( '/<img([^>]*)>/is', $label )) ){
 			$icon_class = 'ext-icon-'. $this->get_opt( 'icon', 'style' );
-			$this->add_attr_value( $attrs, 'class', $icon_class );
+			self::add_attr_value( $attrs, 'class', $icon_class );
 		}
 
         // set target
@@ -441,7 +478,25 @@ final class WP_External_Links {
             }
         }
 
+        // filter hook for changing attributes
+		$attrs = apply_filters('wpel_external_link_attrs', $attrs, $original_attrs, $label);
+
 		// create element code
+        $created_link = self::create_link($label, $attrs);
+
+		// filter
+		$created_link = apply_filters('wpel_external_link', $created_link, $link, $label, $attrs, FALSE /* only used for backwards compatibility */);
+
+		return $created_link;
+	}
+
+    /**
+     * Create a HTML link <a>
+     * @param string $label
+     * @param array $attrs
+     * @return string
+     */
+    public static function create_link($label, $attrs) {
 		$created_link = '<a';
 
 		foreach ( $attrs AS $key => $value ) {
@@ -449,22 +504,18 @@ final class WP_External_Links {
         }
 
 		$created_link .= '>'. $label .'</a>';
-
-		// filter
-		$created_link = apply_filters('wpel_external_link', $created_link, $link, $label, $attrs, FALSE);
-
-		return $created_link;
-	}
+        return $created_link;
+    }
 
 	/**
 	 * Add value to attribute
-	 * @param array  $attrs
-	 * @param string $attr
+	 * @param array  &$attrs
+	 * @param string $attr_name
 	 * @param string $value
-	 * @param string $default  Optional, default NULL which means tje attribute will be removed when (new) value is empty
+	 * @param string $default  Optional, default NULL which means the attribute will be removed when (new) value is empty
 	 * @return New value
 	 */
-	public function add_attr_value( &$attrs, $attr_name, $value, $default = NULL ) {
+	public static function add_attr_value( &$attrs, $attr_name, $value, $default = NULL ) {
 		if ( key_exists( $attr_name, $attrs ) )
 			$old_value = $attrs[ $attr_name ];
 
@@ -486,153 +537,6 @@ final class WP_External_Links {
 		} else {
 			$attrs[ $attr_name ] = $value;
 		}
-
-		return $value;
-	}
-
-	/**
-	 * Experimental phpQuery...
-	 */
-
-	/**
-	 * Filter content
-	 * @param string $content
-	 * @return string
-	 */
-	private function filter_phpquery( $content ) {
-		// Workaround: remove <head>-attributes before using phpQuery
-		$regexp_head = '/<head(>|\s(.*?)>)>/is';
-		$clean_head = '<head>';
-
-		// set simple <head> without attributes
-		preg_match( $regexp_head, $content, $matches );
-
-		if( count( $matches ) > 0 ) {
-			$original_head = $matches[ 0 ];
-			$content = str_replace( $original_head, $clean_head, $content );
-		}
-
-		//phpQuery::$debug = true;
-
-		// set document
-		$doc = phpQuery::newDocument( $content );
-
-		$excl_sel = $this->get_opt( 'filter_excl_sel' );
-
-		// set excludes
-		if ( ! empty( $excl_sel ) ) {
-			$excludes = $doc->find( $excl_sel );
-			$excludes->filter( 'a' )->attr( 'excluded', true );
-			$excludes->find( 'a' )->attr( 'excluded', true );
-		}
-
-		// get <a>-tags
-		$links = $doc->find( 'a' );
-
-		// set links
-		$count = count( $links );
-
-		for( $x = 0; $x < $count; $x++ ) {
-			$a = $links->eq( $x );
-
-			if ( ! $a->attr( 'excluded' ) )
-				$this->set_link_phpquery( $links->eq( $x ) );
-		}
-
-		// remove excluded
-		if ( ! empty( $excl_sel ) ) {
-			$excludes = $doc->find( $excl_sel );
-			$excludes->filter( 'a' )->removeAttr( 'excluded' );
-			$excludes->find( 'a' )->removeAttr( 'excluded' );
-		}
-
-		// remove style when no icon classes are found
-		if ( strpos( $doc, 'ext-icon-' ) === FALSE ) {
-			// remove icon css
-			$css = $doc->find( 'link#wp-external-links-css' )->eq(0);
-			$css->remove();
-		}
-
-		// get document content
-		$content = (string) $doc;
-
-		if( isset( $original_head ) ) {
-			// recover original <head> with attributes
-			$content = str_replace( $clean_head, $original_head, $content );
-		}
-
-		return $content;
-	}
-
-	/**
-	 * Set link...
-	 * @param Node $a
-	 * @return Node
-	 */
-	public function set_link_phpquery( $a ) {
-		$href = strtolower( $a->attr( 'href' ) . '' );
-		$rel = strtolower( $a->attr( 'rel' ) . '' );
-
-		// check if it is an external link and not excluded
-		if ( ! $this->is_external( $href, $rel ) || $this->is_ignored( $href ) )
-			return $a;
-
-		// add "external" to rel-attribute
-		if ( $this->get_opt( 'external' ) ){
-			$this->add_attr_value_phpquery( $a, 'rel', 'external' );
-		}
-
-		// add "nofollow" to rel-attribute, when doesn't have "follow"
-		if ( $this->get_opt( 'nofollow' ) AND strpos( $rel, 'follow' ) === FALSE ){
-			$this->add_attr_value_phpquery( $a, 'rel', 'nofollow' );
-		}
-
-		// set title
-		$title = str_replace( '%title%', $a->attr( 'title' ), $this->get_opt( 'title' ) );
-		$a->attr( 'title', $title );
-
-		// add icon class, unless no-icon class isset or another icon class ('ext-icon-...') is found
-		if ( $this->get_opt( 'icon' ) > 0 AND ( ! $this->get_opt( 'no_icon_class' ) OR strpos( $a->attr( 'class' ), $this->get_opt( 'no_icon_class' ) ) === FALSE ) AND strpos( $a->attr( 'class' ), 'ext-icon-' ) === FALSE  ){
-			$icon_class = 'ext-icon-'. $this->get_opt( 'icon' );
-			$a->addClass( $icon_class );
-		}
-
-		// add user-defined class
-		if ( $this->get_opt( 'class_name' ) ){
-			$a->addClass( $this->get_opt( 'class_name' ) );
-		}
-
-		// set target
-		if ( $this->get_opt( 'target' ) != '_none' AND ! $this->get_opt( 'use_js' ) AND ( ! $this->get_opt( 'no_icon_same_window' ) OR ! $this->get_opt( 'no_icon_class' ) OR strpos( $a->attr( 'class' ), $this->get_opt( 'no_icon_class' ) ) === FALSE ) )
-			$a->attr( 'target', $this->get_opt( 'target' ) );
-
-		return $a;
-	}
-
-	/**
-	 * Add value to attribute
-	 * @param Node   $node
-	 * @param string $attr
-	 * @param string $value
-	 * @return New value
-	 */
-	private function add_attr_value_phpquery( $node, $attr, $value ) {
-		$old_value = $node->attr( $attr );
-
-		if ( empty( $old_value ) )
-			$old_value = '';
-
-		$split = explode( ' ', strtolower( $old_value ) );
-
-		if ( in_array( $value, $split ) ) {
-			$value = $old_value;
-		} else {
-			$value = ( empty( $old_value ) )
-								? $value
-								: $old_value .' '. $value;
-		}
-
-		$node->attr( $attr, $value );
 
 		return $value;
 	}
